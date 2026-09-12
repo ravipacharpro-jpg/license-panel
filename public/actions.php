@@ -1,5 +1,5 @@
 <?php
-// public/actions.php - all dashboard POST actions
+// public/actions.php - dashboard POST actions (reference features only)
 require_once __DIR__ . '/../src/auth.php';
 
 $user = require_login();
@@ -17,206 +17,11 @@ if (!verify_csrf($_POST['csrf'] ?? null)) back('', 'err', 'Invalid CSRF. Refresh
 $action = trim($_POST['action'] ?? '');
 $role = $user['role'];
 $uid  = (int)$user['id'];
-// refresh user (balance may change)
-$fresh = current_user() ?: $user;
 
 try {
 switch ($action) {
 
-  case 'generate_key': {
-    $duration = trim($_POST['duration_type'] ?? '30days');
-    if (!in_array($duration, ['1day','7days','30days','lifetime'], true)) $duration = '30days';
-    $deviceLimit = max(1, min(20, (int)($_POST['device_limit'] ?? 1)));
-    $assigned = trim($_POST['assigned_to'] ?? '');
-    $qty = max(1, min(20, (int)($_POST['qty'] ?? 1)));
-    if ($role === 'reseller' && $qty > 10) $qty = 10;
-
-    $priceEach = price_for_duration($duration);
-    $total = $priceEach * $qty;
-
-    if ($role === 'reseller') {
-        // check balance
-        $st = $pdo->prepare('SELECT wallet_balance FROM users WHERE id = ?');
-        $st->execute([$uid]);
-        $bal = (float)($st->fetch()['wallet_balance'] ?? 0);
-        if ($bal < $total) back('keys','err',"Insufficient balance. Need ₹{$total}, have ₹{$bal}. Top-up first.");
-        // deduct
-        $pdo->beginTransaction();
-        $pdo->prepare('UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ?')->execute([$total, $uid]);
-        $pdo->prepare("INSERT INTO transactions (user_id,type,amount,reference,status) VALUES (?,'purchase',?, ?, 'completed')")
-            ->execute([$uid, -$total, "buy {$qty}x {$duration}"]);
-        $made = [];
-        for ($i=0;$i<$qty;$i++) {
-            $ks = generate_unique_key($pdo);
-            $exp = calc_expiry($duration);
-            $pdo->prepare('INSERT INTO license_keys (key_string,created_by,assigned_to,duration_type,expires_at,device_limit,status) VALUES (?,?,?,?,?,?,?)')
-                ->execute([$ks, $uid, ($assigned!==''?$assigned:null), $duration, $exp, $deviceLimit, 'active']);
-            $made[] = $ks;
-            log_activity($uid, 'key_generate', (int)$pdo->lastInsertId(), "reseller buy {$duration} ₹{$priceEach}");
-        }
-        $pdo->commit();
-        back('keys','ok',"{$qty} key(s) generated. ₹{$total} deducted.");
-    } else {
-        // owner/admin free generation
-        $pdo->beginTransaction();
-        for ($i=0;$i<$qty;$i++) {
-            $ks = generate_unique_key($pdo);
-            $exp = calc_expiry($duration);
-            $pdo->prepare('INSERT INTO license_keys (key_string,created_by,assigned_to,duration_type,expires_at,device_limit,status) VALUES (?,?,?,?,?,?,?)')
-                ->execute([$ks, $uid, ($assigned!==''?$assigned:null), $duration, $exp, $deviceLimit, 'active']);
-            log_activity($uid, 'key_generate', (int)$pdo->lastInsertId(), "{$role} gen {$duration}");
-        }
-        $pdo->commit();
-        back('keys','ok',"{$qty} key(s) generated (free, {$role}).");
-    }
-    break;
-  }
-
-  case 'revoke_key': {
-    $id = (int)($_POST['key_id'] ?? 0);
-    $st = $pdo->prepare('SELECT * FROM license_keys WHERE id = ? LIMIT 1');
-    $st->execute([$id]);
-    $k = $st->fetch();
-    if (!$k) back('keys','err','Key not found.');
-    if ($role === 'reseller' && (int)$k['created_by'] !== $uid) back('keys','err','You can revoke only your keys.');
-    $pdo->prepare("UPDATE license_keys SET status='revoked' WHERE id=?")->execute([$id]);
-    log_activity($uid, 'key_revoke', $id, 'revoked '.$k['key_string']);
-    back('keys','ok','Key revoked.');
-    break;
-  }
-
-  case 'activate_key': {
-    $id = (int)($_POST['key_id'] ?? 0);
-    if (!in_array($role, ['owner','admin'], true)) back('keys','err','Only admin/owner.');
-    $pdo->prepare("UPDATE license_keys SET status='active' WHERE id=?")->execute([$id]);
-    log_activity($uid, 'key_activate', $id, 'activated');
-    back('keys','ok','Key activated.');
-    break;
-  }
-
-  case 'delete_key': {
-    $id = (int)($_POST['key_id'] ?? 0);
-    if ($role !== 'owner') back('keys','err','Only owner can delete.');
-    $pdo->prepare('DELETE FROM license_keys WHERE id=?')->execute([$id]);
-    log_activity($uid, 'key_delete', $id, 'deleted');
-    back('keys','ok','Key deleted.');
-    break;
-  }
-
-  case 'topup_request': {
-    $amount = (float)($_POST['amount'] ?? 0);
-    $ref = trim($_POST['reference'] ?? '');
-    if ($amount < 10) back('wallet','err','Min top-up ₹10.');
-    if ($ref === '') back('wallet','err','UPI reference / UTR required.');
-    $pdo->prepare("INSERT INTO transactions (user_id,type,amount,reference,status) VALUES (?,'topup',?,?,'pending')")
-        ->execute([$uid, $amount, $ref]);
-    log_activity($uid, 'topup_request', null, "₹{$amount} ref={$ref}");
-    back('wallet','ok','Top-up request sent. Admin will approve soon.');
-    break;
-  }
-
-  case 'topup_approve': {
-    if (!in_array($role, ['owner','admin'], true)) back('topups','err','Forbidden.');
-    $id = (int)($_POST['tx_id'] ?? 0);
-    $st = $pdo->prepare("SELECT * FROM transactions WHERE id=? AND type='topup' AND status='pending' LIMIT 1");
-    $st->execute([$id]);
-    $tx = $st->fetch();
-    if (!$tx) back('topups','err','Request not found/already handled.');
-    $pdo->beginTransaction();
-    $pdo->prepare("UPDATE transactions SET status='completed' WHERE id=?")->execute([$id]);
-    $pdo->prepare('UPDATE users SET wallet_balance = wallet_balance + ? WHERE id=?')->execute([(float)$tx['amount'], (int)$tx['user_id']]);
-    // referral commission to referrer of this user
-    $pct = (float)get_setting('referral_percent','10');
-    $uRow = $pdo->prepare('SELECT referred_by FROM users WHERE id=?')->execute([(int)$tx['user_id']]) ? null : null;
-    $q = $pdo->prepare('SELECT referred_by FROM users WHERE id=? LIMIT 1');
-    $q->execute([(int)$tx['user_id']]);
-    $ur = $q->fetch();
-    if ($ur && !empty($ur['referred_by']) && $pct > 0) {
-        $comm = round(((float)$tx['amount']) * $pct / 100, 2);
-        if ($comm > 0) {
-            $pdo->prepare('UPDATE users SET wallet_balance = wallet_balance + ? WHERE id=?')->execute([$comm, (int)$ur['referred_by']]);
-            $pdo->prepare("INSERT INTO transactions (user_id,type,amount,reference,status) VALUES (?,'commission',?,?,'completed')")
-                ->execute([(int)$ur['referred_by'], $comm, 'ref commission from user#'.(int)$tx['user_id'].' topup#'.$id]);
-        }
-    }
-    $pdo->commit();
-    log_activity($uid, 'topup_approve', null, "tx#{$id} ₹{$tx['amount']}");
-    back('topups','ok',"Top-up #{$id} approved.");
-    break;
-  }
-
-  case 'topup_reject': {
-    if (!in_array($role, ['owner','admin'], true)) back('topups','err','Forbidden.');
-    $id = (int)($_POST['tx_id'] ?? 0);
-    $pdo->prepare("UPDATE transactions SET status='rejected' WHERE id=? AND status='pending'")->execute([$id]);
-    log_activity($uid, 'topup_reject', null, "tx#{$id}");
-    back('topups','ok',"Top-up #{$id} rejected.");
-    break;
-  }
-
-  case 'ban_user': {
-    if (!in_array($role, ['owner','admin'], true)) back('users','err','Forbidden.');
-    $tid = (int)($_POST['user_id'] ?? 0);
-    if ($tid === $uid) back('users','err','You cannot ban yourself.');
-    $t = $pdo->prepare('SELECT role FROM users WHERE id=?')->execute([$tid]) ? null : null;
-    $q = $pdo->prepare('SELECT * FROM users WHERE id=? LIMIT 1'); $q->execute([$tid]); $tu = $q->fetch();
-    if (!$tu) back('users','err','User not found.');
-    if ($role === 'admin' && in_array($tu['role'], ['owner','admin'], true)) back('users','err','Admin can ban only resellers.');
-    $pdo->prepare("UPDATE users SET status='banned' WHERE id=?")->execute([$tid]);
-    log_activity($uid, 'user_ban', null, "banned user#{$tid} {$tu['email']}");
-    back('users','ok','User banned.');
-    break;
-  }
-
-  case 'unban_user': {
-    if (!in_array($role, ['owner','admin'], true)) back('users','err','Forbidden.');
-    $tid = (int)($_POST['user_id'] ?? 0);
-    $pdo->prepare("UPDATE users SET status='active' WHERE id=?")->execute([$tid]);
-    log_activity($uid, 'user_unban', null, "unbanned user#{$tid}");
-    back('users','ok','User unbanned.');
-    break;
-  }
-
-  case 'set_role': {
-    if ($role !== 'owner') back('users','err','Only owner can change roles.');
-    $tid = (int)($_POST['user_id'] ?? 0);
-    $newRole = trim($_POST['new_role'] ?? '');
-    if (!in_array($newRole, ['admin','reseller'], true)) back('users','err','Invalid role.');
-    if ($tid === $uid) back('users','err','Cannot change own role.');
-    $pdo->prepare('UPDATE users SET role=? WHERE id=?')->execute([$newRole, $tid]);
-    log_activity($uid, 'role_change', null, "user#{$tid} -> {$newRole}");
-    back('users','ok',"Role updated to {$newRole}.");
-    break;
-  }
-
-  case 'update_pricing': {
-    if ($role !== 'owner') back('settings','err','Only owner.');
-    $fields = ['price_1day','price_7days','price_30days','price_lifetime','referral_percent','upi_id','app_name','site_tagline','telegram_link','support_email','signup_token_required'];
-    foreach ($fields as $f) {
-        if (isset($_POST[$f])) {
-            $v = trim((string)$_POST[$f]);
-            if (str_starts_with($f, 'price_') && !is_numeric($v)) continue;
-            if ($f === 'referral_percent') { $v = (string)max(0, min(50, (float)$v)); }
-            if ($f === 'signup_token_required') { $v = !empty($_POST[$f]) ? '1' : '0'; }
-            set_setting($f, $v);
-        }
-    }
-    if (!isset($_POST['signup_token_required'])) set_setting('signup_token_required', '0');
-    log_activity($uid, 'settings_update');
-    back('settings','ok','Settings saved.');
-    break;
-  }
-
-  case 'regen_api_key': {
-    if ($role !== 'owner') back('settings','err','Only owner.');
-    $k = bin2hex(random_bytes(16));
-    set_setting('admin_api_key', $k);
-    log_activity($uid, 'api_key_regen');
-    back('api','ok','Admin API key regenerated.');
-    break;
-  }
-
-  // ---------- MultiPanelX: Mods ----------
+  // ---------- Mods ----------
   case 'mod_save': {
     if (!in_array($role, ['owner','admin'], true)) back('mods','err','Forbidden.');
     $modId = (int)($_POST['mod_id'] ?? 0);
@@ -258,7 +63,7 @@ switch ($action) {
     break;
   }
 
-  // ---------- MultiPanelX: Plans ----------
+  // ---------- Plans ----------
   case 'plan_save': {
     if (!in_array($role, ['owner','admin'], true)) back('plans','err','Forbidden.');
     $planId = (int)($_POST['plan_id'] ?? 0);
@@ -298,7 +103,69 @@ switch ($action) {
     break;
   }
 
-  // ---------- MultiPanelX: APK upload ----------
+  // ---------- License keys: bulk generate for mod (available pool) ----------
+  case 'mod_key_generate': {
+    if (!in_array($role, ['owner','admin'], true)) back('keys','err','Forbidden.');
+    $modId = (int)($_POST['mod_id'] ?? 0);
+    $dur = max(0, (int)($_POST['duration'] ?? 30));
+    $dtype = strtolower(trim($_POST['duration_type'] ?? 'days'));
+    $price = max(0, (float)($_POST['price'] ?? 0));
+    $qty = max(1, min(50, (int)($_POST['qty'] ?? 1)));
+    if (!in_array($dtype, ['minutes','hours','days','months','lifetime'], true)) $dtype = 'days';
+    if ($modId <= 0) back('keys','err','Select mod.');
+    $pdo->beginTransaction();
+    for ($i = 0; $i < $qty; $i++) {
+        $ks = generate_unique_key($pdo);
+        $pdo->prepare("INSERT INTO license_keys (key_string,created_by,mod_id,duration,duration_type,price,status,device_limit) VALUES (?,?,?,?,?,?,'available',1)")
+            ->execute([$ks, $uid, $modId, $dur, $dtype, $price]);
+        log_activity($uid, 'key_generate', (int)$pdo->lastInsertId(), "mod#{$modId} {$dur} {$dtype} ₹{$price}");
+    }
+    $pdo->commit();
+    back('keys','ok',"{$qty} key(s) generated to available pool.");
+    break;
+  }
+
+  case 'key_block': {
+    if (!in_array($role, ['owner','admin'], true)) back('keys','err','Forbidden.');
+    $id = (int)($_POST['key_id'] ?? 0);
+    $pdo->prepare("UPDATE license_keys SET status='blocked' WHERE id=?")->execute([$id]);
+    log_activity($uid, 'key_block', $id, 'blocked');
+    back('keys','ok','Key blocked.');
+    break;
+  }
+
+  case 'key_unblock': {
+    if (!in_array($role, ['owner','admin'], true)) back('keys','err','Forbidden.');
+    $id = (int)($_POST['key_id'] ?? 0);
+    $st = $pdo->prepare('SELECT sold_to FROM license_keys WHERE id=? LIMIT 1');
+    $st->execute([$id]);
+    $row = $st->fetch();
+    $new = ($row && !empty($row['sold_to'])) ? 'sold' : 'available';
+    $pdo->prepare('UPDATE license_keys SET status=? WHERE id=?')->execute([$new, $id]);
+    log_activity($uid, 'key_unblock', $id, 'unblocked');
+    back('keys','ok','Key unblocked.');
+    break;
+  }
+
+  case 'key_expire': {
+    if (!in_array($role, ['owner','admin'], true)) back('keys','err','Forbidden.');
+    $id = (int)($_POST['key_id'] ?? 0);
+    $pdo->prepare("UPDATE license_keys SET status='expired' WHERE id=?")->execute([$id]);
+    log_activity($uid, 'key_expire', $id, 'expired');
+    back('keys','ok','Key expired.');
+    break;
+  }
+
+  case 'key_delete': {
+    if (!in_array($role, ['owner','admin'], true)) back('keys','err','Forbidden.');
+    $id = (int)($_POST['key_id'] ?? 0);
+    $pdo->prepare('DELETE FROM license_keys WHERE id=?')->execute([$id]);
+    log_activity($uid, 'key_delete', $id, 'deleted');
+    back('keys','ok','Key deleted.');
+    break;
+  }
+
+  // ---------- APK upload ----------
   case 'apk_upload': {
     if (!in_array($role, ['owner','admin'], true)) back('downloads','err','Forbidden.');
     $modId = (int)($_POST['mod_id'] ?? 0);
@@ -311,7 +178,6 @@ switch ($action) {
     $dest = $upDir . '/' . $safe;
     if (!@move_uploaded_file($_FILES['apk']['tmp_name'], $dest)) back('downloads','err','Upload failed.');
     $rel = 'data/uploads/' . $safe;
-    // also expose under public via symlink path? Serve via download.php instead
     $pdo->prepare('INSERT INTO mod_apks (mod_id,file_name,file_path,file_size) VALUES (?,?,?,?)')
         ->execute([$modId, $orig, $rel, (int)$_FILES['apk']['size']]);
     log_activity($uid, 'apk_upload', null, "mod#{$modId} {$orig}");
@@ -332,7 +198,7 @@ switch ($action) {
     break;
   }
 
-  // ---------- MultiPanelX: Store order (UPI, pending approval) ----------
+  // ---------- Store order (UPI, pending approval) ----------
   case 'store_order': {
     $planId = (int)($_POST['plan_id'] ?? 0);
     $txn = trim($_POST['upi_txn_id'] ?? '');
@@ -350,7 +216,7 @@ switch ($action) {
     break;
   }
 
-  // ---------- MultiPanelX: Approvals (auto-generate key on approve) ----------
+  // ---------- Approvals (auto-generate key on approve) ----------
   case 'order_approve': {
     if (!in_array($role, ['owner','admin'], true)) back('orders','err','Forbidden.');
     $id = (int)($_POST['tx_id'] ?? 0);
@@ -365,14 +231,12 @@ switch ($action) {
         $pdo->prepare("UPDATE transactions SET status='completed' WHERE id=?")->execute([$id]);
         $ks = generate_unique_key($pdo);
         $exp = ($plan['duration_type'] === 'lifetime') ? null : calc_expiry_plan((int)$plan['duration'], (string)$plan['duration_type']);
-        // legacy duration_type mapping for expires calc already done; store numeric too
         $pdo->prepare("INSERT INTO license_keys (key_string,created_by,assigned_to,mod_id,duration,duration_type,expires_at,price,status,sold_to,sold_at,device_limit) VALUES (?,?,?,?,?,?,?,?, 'sold',?,?,1)")
             ->execute([$ks, $uid, null, (int)$plan['mod_id'], (int)$plan['duration'], (string)$plan['duration_type'], $exp, (float)$plan['price'], (int)$tx['user_id'], date('Y-m-d H:i:s')]);
         log_activity($uid, 'order_approve', (int)$pdo->lastInsertId(), "tx#{$id} key={$ks}");
         $pdo->commit();
         back('orders','ok',"Order #{$id} approved. Key {$ks} assigned.");
     } else {
-        // fallback: old generic purchase ref "License purchase #ID" or buy flow
         $pdo->prepare("UPDATE transactions SET status='completed' WHERE id=?")->execute([$id]);
         $pdo->commit();
         back('orders','ok',"Order #{$id} approved.");
@@ -389,7 +253,7 @@ switch ($action) {
     break;
   }
 
-  // ---------- MultiPanelX: buy available key with wallet ----------
+  // ---------- Buy available key with wallet ----------
   case 'purchase_available_key': {
     $keyId = (int)($_POST['key_id'] ?? 0);
     if ($keyId <= 0) back('store','err','Invalid key.');
@@ -397,7 +261,7 @@ switch ($action) {
     $st = $pdo->prepare('SELECT * FROM license_keys WHERE id=? LIMIT 1');
     $st->execute([$keyId]);
     $key = $st->fetch();
-    if (!$key || !empty($key['sold_to']) || in_array(($key['status'] ?? ''), ['sold'], true)) throw new Exception('Key no longer available.');
+    if (!$key || !empty($key['sold_to']) || ($key['status'] ?? '') !== 'available') throw new Exception('Key no longer available.');
     $price = (float)($key['price'] ?? 0);
     $b = $pdo->prepare('SELECT wallet_balance FROM users WHERE id=?'); $b->execute([$uid]);
     $bal = (float)($b->fetch()['wallet_balance'] ?? 0);
@@ -412,7 +276,7 @@ switch ($action) {
     break;
   }
 
-  // ---------- MultiPanelX: admin direct balance add ----------
+  // ---------- Admin direct balance add ----------
   case 'balance_add': {
     if (!in_array($role, ['owner','admin'], true)) back('users','err','Forbidden.');
     $tid = (int)($_POST['user_id'] ?? 0);
@@ -427,7 +291,7 @@ switch ($action) {
     break;
   }
 
-  // ---------- MultiPanelX: signup tokens ----------
+  // ---------- Signup tokens ----------
   case 'token_generate': {
     if (!in_array($role, ['owner','admin'], true)) back('tokens','err','Forbidden.');
     $days = max(1, min(365, (int)($_POST['expiry_days'] ?? 7)));
@@ -456,6 +320,62 @@ switch ($action) {
     break;
   }
 
+  // ---------- Users ----------
+  case 'ban_user': {
+    if (!in_array($role, ['owner','admin'], true)) back('users','err','Forbidden.');
+    $tid = (int)($_POST['user_id'] ?? 0);
+    if ($tid === $uid) back('users','err','You cannot ban yourself.');
+    $q = $pdo->prepare('SELECT * FROM users WHERE id=? LIMIT 1'); $q->execute([$tid]); $tu = $q->fetch();
+    if (!$tu) back('users','err','User not found.');
+    if ($role === 'admin' && in_array($tu['role'], ['owner','admin'], true)) back('users','err','Admin can ban only resellers.');
+    $pdo->prepare("UPDATE users SET status='banned' WHERE id=?")->execute([$tid]);
+    log_activity($uid, 'user_ban', null, "banned user#{$tid} {$tu['email']}");
+    back('users','ok','User banned.');
+    break;
+  }
+
+  case 'unban_user': {
+    if (!in_array($role, ['owner','admin'], true)) back('users','err','Forbidden.');
+    $tid = (int)($_POST['user_id'] ?? 0);
+    $pdo->prepare("UPDATE users SET status='active' WHERE id=?")->execute([$tid]);
+    log_activity($uid, 'user_unban', null, "unbanned user#{$tid}");
+    back('users','ok','User unbanned.');
+    break;
+  }
+
+  case 'set_role': {
+    if ($role !== 'owner') back('users','err','Only owner can change roles.');
+    $tid = (int)($_POST['user_id'] ?? 0);
+    $newRole = trim($_POST['new_role'] ?? '');
+    if (!in_array($newRole, ['admin','reseller'], true)) back('users','err','Invalid role.');
+    if ($tid === $uid) back('users','err','Cannot change own role.');
+    $pdo->prepare('UPDATE users SET role=? WHERE id=?')->execute([$newRole, $tid]);
+    log_activity($uid, 'role_change', null, "user#{$tid} -> {$newRole}");
+    back('users','ok',"Role updated to {$newRole}.");
+    break;
+  }
+
+  // ---------- Site settings (branding + UPI only) ----------
+  case 'update_site': {
+    if ($role !== 'owner') back('settings','err','Only owner.');
+    foreach (['app_name','site_tagline','telegram_link','support_email','upi_id'] as $f) {
+        if (isset($_POST[$f])) set_setting($f, trim((string)$_POST[$f]));
+    }
+    log_activity($uid, 'settings_update');
+    back('settings','ok','Settings saved.');
+    break;
+  }
+
+  case 'regen_api_key': {
+    if ($role !== 'owner') back('api','err','Only owner.');
+    $k = bin2hex(random_bytes(16));
+    set_setting('admin_api_key', $k);
+    log_activity($uid, 'api_key_regen');
+    back('api','ok','Admin API key regenerated.');
+    break;
+  }
+
+  // ---------- Profile ----------
   case 'profile_update': {
     $name = trim($_POST['name'] ?? '');
     $email = trim($_POST['email'] ?? '');

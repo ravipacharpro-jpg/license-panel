@@ -2,11 +2,6 @@
 require_once __DIR__ . '/../src/helpers.php';
 $user = current_user();
 $appName = app_name();
-$p1 = get_setting('price_1day','49');
-$p7 = get_setting('price_7days','149');
-$p30 = get_setting('price_30days','299');
-$pl = get_setting('price_lifetime','999');
-$refPct = get_setting('referral_percent','10');
 $hostH = $_SERVER['HTTP_HOST'] ?? 'your-app.onrender.com';
 $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
 $apiBase = ($isHttps ? 'https://' : 'http://') . $hostH . '/api/validate';
@@ -60,8 +55,8 @@ try {
     Sell License Keys<br><span class="neon-text">Like a Pro Panel</span>
   </h1>
   <p class="fade-up text-slate-300/90 max-w-2xl mx-auto mt-5 text-sm md:text-base">
-    <?= e($tagline) ?> — Owner, Admin aur Reseller ke liye full role-based panel. Mods + Plans, UPI QR orders,
-    key generation, HWID lock, wallet top-up, <?= e($refPct) ?>% referral commission, APK downloads aur REST API — sab ek jagah.
+    <?= e($tagline) ?> — Mods + Plans store, UPI QR orders, license keys, device lock,
+    wallet, APK downloads aur REST API — sab ek jagah.
   </p>
   <div class="fade-up flex flex-col sm:flex-row gap-3 justify-center mt-8">
     <?php if ($user): ?>
@@ -83,17 +78,17 @@ try {
   <div class="glass card-hover tilt p-6 fade-up">
     <div class="text-2xl font-bold mb-1 neon-text">01</div>
     <h3 class="font-bold text-lg mb-1">Mods + Plans Store</h3>
-    <p class="text-sm text-slate-300">Unlimited mods, hours/days/months/lifetime plans, UPI QR orders, approve pe auto key assign.</p>
+    <p class="text-sm text-slate-300">Unlimited mods, hours/days/months plans, UPI QR orders, approve pe auto key assign.</p>
   </div>
   <div class="glass card-hover tilt p-6 fade-up">
     <div class="text-2xl font-bold mb-1 neon-text">02</div>
-    <h3 class="font-bold text-lg mb-1">Wallet + UPI Topup</h3>
-    <p class="text-sm text-slate-300">QR scan karke pay karo, UTR submit karo. Admin approval, referral commission, full ledger.</p>
+    <h3 class="font-bold text-lg mb-1">Wallet + UPI</h3>
+    <p class="text-sm text-slate-300">QR scan karke pay karo, UTR submit karo. Balance se instant key purchase.</p>
   </div>
   <div class="glass card-hover tilt p-6 fade-up">
     <div class="text-2xl font-bold mb-1 neon-text">03</div>
     <h3 class="font-bold text-lg mb-1">API + APK Downloads</h3>
-    <p class="text-sm text-slate-300">GET /api.php verify, device lock, admin remote API, purchased mods ke APK downloads.</p>
+    <p class="text-sm text-slate-300">GET /api.php verify, device lock, admin remote API, purchased APK downloads.</p>
   </div>
 </section>
 
@@ -115,17 +110,10 @@ try {
 </section>
 <?php endif; ?>
 
-<!-- PRICING -->
+<!-- API STRIP -->
 <section class="relative z-10 w-full max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 pb-10">
-  <h2 class="text-center text-2xl md:text-3xl font-extrabold mb-6">Simple <span class="neon-text">Pricing</span></h2>
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-    <div class="glass card-hover tilt p-6 text-center"><div class="text-sm text-slate-300">1 Day</div><div class="text-3xl font-extrabold mt-1">₹<?= e($p1) ?></div><div class="text-xs text-slate-400 mt-1">Trial key</div></div>
-    <div class="glass card-hover tilt p-6 text-center border-purple-400/40"><div class="text-sm text-purple-200">7 Days ★</div><div class="text-3xl font-extrabold mt-1 neon-text">₹<?= e($p7) ?></div><div class="text-xs text-slate-400 mt-1">Most popular</div></div>
-    <div class="glass card-hover tilt p-6 text-center"><div class="text-sm text-slate-300">30 Days</div><div class="text-3xl font-extrabold mt-1">₹<?= e($p30) ?></div><div class="text-xs text-slate-400 mt-1">Best value</div></div>
-    <div class="glass card-hover tilt p-6 text-center"><div class="text-sm text-cyan-200">Lifetime</div><div class="text-3xl font-extrabold mt-1">₹<?= e($pl) ?></div><div class="text-xs text-slate-400 mt-1">One-time</div></div>
-  </div>
   <div class="glass mt-4 p-4 text-sm text-slate-200 flex flex-col md:flex-row items-center justify-between gap-3">
-    <span>External app se key check karna hai? <code class="text-cyan-300">POST /api/validate</code> ready hai.</span>
+    <span>App me key check karna hai? <code class="text-cyan-300">GET /api.php?key=&device_id=</code> ready hai.</span>
     <button onclick="copyText('<?= e($apiBase) ?>','API URL copied!')" class="glass-soft px-4 py-2 rounded-xl text-xs font-bold hover:border-cyan-300/50">Copy API Endpoint</button>
   </div>
 </section>

@@ -4,9 +4,8 @@ RewriteEngine On
 # Force HTTPS behind Render proxy is handled by app; keep clean URLs
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-# MultiPanelX-compatible + ours
+# MultiPanelX-compatible
 RewriteRule ^api$ api.php [L]
-RewriteRule ^api/validate$ api/validate.php [L]
 
 <FilesMatch "\.(env|sqlite|db)$">
   Require all denied

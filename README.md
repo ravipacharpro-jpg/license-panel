@@ -1,22 +1,20 @@
-# NEXUS License Panel — Premium PHP License + Wallet + Referral + Mods Store
+# NEXUS License Panel — Mod Panel (MultiPanelX features, glass UI)
 
-Dark neon glassmorphism UI (same). Andar MultiPanelX-style full features: mods, plans, store UPI orders, APK downloads, referral tokens, charts, global search.
+Self-hosted mod + license selling panel. Same features as MultiPanelX reference, same dark neon glass UI.
 
-## Features (UI same, features MultiPanelX jaisi)
-- Landing (particles + gradient) + available-mods showcase + Login/Signup glass cards
-- Dashboard role-based (same glass UI, tab system):
-  - OWNER/ADMIN: overview + 7-day Chart.js analytics, mods CRUD, plans (minutes/hours/days/months/lifetime), license keys (generic + mod keys, available/sold/blocked/expired), orders approve (UTR verify → auto key generate), topups approve, users + direct balance-add, signup tokens, APK upload, logs, API docs, profile, settings
-  - RESELLER/USER: overview + chart, Store (plans grid + UPI QR modal + UTR submit), My Orders, Keys vault, Wallet (QR topup), Downloads (purchased APKs), Referral commission + link, Logs, API docs, Profile
+## Features
+- Landing + mods showcase + Login/Signup glass cards
+- Dashboard (same glass UI, tab system):
+  - ADMIN/OWNER: overview + 7-day Chart.js analytics, Manage Mods, Manage Plans (minutes/hours/days/months/lifetime), License Keys (bulk generate → available pool, block/unblock/expire/delete), Orders (UPI UTR approve → auto key), APK upload, Transactions ledger, Manage Clients + direct balance-add, Referral Codes (signup tokens), API Docs, My Profile, Site Settings
+  - USER: overview + chart, Store (plans + UPI QR modal + UTR order, available-keys wallet buy, purchased vault), My Orders, Wallet (balance + history, top-up via admin), Downloads (purchased APKs), API Docs, My Profile
 - Store flow: plan → UPI QR (`upi://pay`) → UTR submit → pending → admin Approve = key auto-create + assign
-- Wallet: UPI QR topup request → approve + referral commission
-- Referral: commission link + admin signup tokens (gated registration optional)
-- Keys: generic (1day/7days/30days/lifetime) + mod keys (numeric duration, sold_to/sold_at, device_id single-lock + hwid multi-limit)
+- Wallet: admin direct credit (balance-add), instant wallet purchase of available keys
+- Keys: mod-based, statuses available/sold/blocked/expired, single device lock
 - API:
-  - `GET /api.php?key=XXX&device_id=YYY` → `{status:success/error, message, data:{mod_name,duration,sold_at,device_id}}` (MultiPanelX compatible)
-  - `POST /api/validate.php {"key","hwid"}` → `{valid:true/false}` (old clients)
+  - `GET /api.php?key=XXX&device_id=YYY` → `{status:success/error, message, data:{mod_name,duration,sold_at,device_id}}`
   - `POST /api.php api_key+action=block/unblock/expire/delete/edit` (remote admin)
-- Extras: global search (Ctrl+K), Chart.js analytics, profile/password, site settings (name/tagline/telegram/support/UPI/api key/signup-token toggle)
-- DB: SQLite default (zero-config) / MySQL via env, PDO + auto-migrate (old DBs alter-safe)
+- Extras: global search (Ctrl+K), Chart.js analytics, profile/password, site settings (name/tagline/telegram/support/UPI)
+- DB: SQLite default (zero-config) / MySQL via env, PDO + auto-migrate
 - Deploy: Dockerfile (php:8.2-apache) + render.yaml
 
 ## Quick local run
@@ -32,12 +30,12 @@ php scripts/create_owner.php "Owner" "owner@mail.com" "pass123"
 ```
 
 ## Typical setup (admin)
-1. Login → Mods → Add mod (e.g. BGMI ESP v2.1)
-2. Plans → Add plan (mod + 30 days + ₹299)
-3. Downloads/APKs → upload APK for mod
-4. Settings → UPI ID + branding save
-5. Share Store link; user Buy → UTR → Orders → Approve = key auto-gen
-6. User: Downloads se APK + My Keys se key copy → app me `GET /api.php?key=&device_id=` verify
+1. Login → Manage Mods → Add mod (e.g. BGMI ESP v2.1)
+2. Manage Plans → Add plan (mod + 30 days + ₹299)
+3. APKs → upload APK for mod
+4. Site Settings → UPI ID + branding save
+5. User Store se Buy → UTR → Orders → Approve = key auto-gen
+6. User: Downloads se APK + keys copy → app me `GET /api.php?key=&device_id=` verify
 
 ## Render live (Docker)
 1. Push to GitHub, Render → New → Web Service → repo
@@ -49,13 +47,12 @@ php scripts/create_owner.php "Owner" "owner@mail.com" "pass123"
 ## API examples
 ```bash
 curl "http://localhost:8000/api.php?key=XXXX-XXXX&device_id=DEV123"
-curl -X POST http://localhost:8000/api/validate.php -H "Content-Type: application/json" -d '{"key":"XXXX","hwid":"DEV123"}'
 curl -X POST http://localhost:8000/api.php -d 'api_key=SECRET&action=block&key_id=12'
 ```
 
 ## Structure
 ```
-public/index.php login.php signup.php dashboard.php actions.php api.php api/validate.php download.php assets/
+public/index.php login.php signup.php dashboard.php actions.php api.php download.php assets/
 src/db.php helpers.php auth.php
 config/schema.sql
 Dockerfile render.yaml .env.example
