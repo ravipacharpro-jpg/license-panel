@@ -264,7 +264,14 @@ class FormatRules
                 break;
         }
 
-        return (bool) filter_var($ip, FILTER_VALIDATE_IP, $which) || (! ctype_print($ip) && (bool) filter_var(inet_ntop($ip), FILTER_VALIDATE_IP, $which));
+        $vip = static function ($addr) use ($which) {
+            if ($which === null) {
+                return (bool) filter_var($addr, FILTER_VALIDATE_IP);
+            }
+            return (bool) filter_var($addr, FILTER_VALIDATE_IP, $which);
+        };
+
+        return $vip($ip) || (! ctype_print($ip) && $vip(inet_ntop($ip)));
     }
 
     /**
