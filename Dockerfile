@@ -1,26 +1,17 @@
-FROM php:8.1-apache
-
-# CI4 extensions (retry-proof apt for flaky builders)
-RUN set -eux; \
-    for i in 1 2 3 4 5; do apt-get update && break || { echo "apt-get update retry $i"; sleep 12; }; done; \
-    apt-get install -y --no-install-recommends --fix-missing libicu-dev; \
-    docker-php-ext-install mysqli pdo pdo_mysql intl mbstring; \
-    a2enmod rewrite headers; \
-    rm -rf /var/lib/apt/lists/*; \
-    php -m | grep -Ei '^(mysqli|intl|mbstring|pdo_mysql)$'
+# webdevops/php-apache ships mysqli + pdo_mysql + intl + mbstring prebuilt,
+# so no apt/compile step (Render builders often fail on apt).
+FROM webdevops/php-apache:8.1
 
 # KURO panel serves from repo ROOT (front controller: index.php).
 # .htaccess routes everything + blocks app/system/writable.
-ENV APACHE_DOCUMENT_ROOT=/var/www/html
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
- && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf || true
+ENV WEB_DOCUMENT_ROOT=/app
+ENV PHP_DATE_TIMEZONE=UTC
 
-WORKDIR /var/www/html
-COPY . /var/www/html/
+WORKDIR /app
+COPY --chown=application:application . /app/
 
-RUN mkdir -p /var/www/html/writable/cache /var/www/html/writable/logs /var/www/html/writable/session /var/www/html/writable/uploads \
- && chown -R www-data:www-data /var/www/html/writable \
- && chmod -R 775 /var/www/html/writable
+RUN mkdir -p writable/cache writable/logs writable/session writable/uploads \
+ && chmod -R 775 writable \
+ && (php -m | grep -Ei '^(mysqli|intl|mbstring|pdo_mysql)$' || (echo 'REQUIRED PHP EXT MISSING'; php -m; exit 1))
 
 EXPOSE 80
-CMD ["apache2-foreground"]
