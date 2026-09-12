@@ -1,59 +1,43 @@
-# NEXUS License Panel — Mod Panel (MultiPanelX features, glass UI)
+# MEXX SDK Panel — Ghost UI License-Key Panel
 
-Self-hosted mod + license selling panel. Same features as MultiPanelX reference, same dark neon glass UI.
+Fresh vanilla PHP + MySQLi panel with **ghost click FX** (phantom pop + synth ghost voice on every button, no audio files) and **3 themes** (Ghost Dark / Ghost Blue / Ghost Light, cookie-based, topbar sparkle switch).
 
 ## Features
-- Landing + mods showcase + Login/Signup glass cards
-- Dashboard (same glass UI, tab system):
-  - ADMIN/OWNER: overview + 7-day Chart.js analytics, Manage Mods, Manage Plans (minutes/hours/days/months/lifetime), License Keys (bulk generate → available pool, block/unblock/expire/delete), Orders (UPI UTR approve → auto key), APK upload, Transactions ledger, Manage Clients + direct balance-add, Referral Codes (signup tokens), API Docs, My Profile, Site Settings
-  - USER: overview + chart, Store (plans + UPI QR modal + UTR order, available-keys wallet buy, purchased vault), My Orders, Wallet (balance + history, top-up via admin), Downloads (purchased APKs), API Docs, My Profile
-- Store flow: plan → UPI QR (`upi://pay`) → UTR submit → pending → admin Approve = key auto-create + assign
-- Wallet: admin direct credit (balance-add), instant wallet purchase of available keys
-- Keys: mod-based, statuses available/sold/blocked/expired, single device lock
-- API:
-  - `GET /api.php?key=XXX&device_id=YYY` → `{status:success/error, message, data:{mod_name,duration,sold_at,device_id}}`
-  - `POST /api.php api_key+action=block/unblock/expire/delete/edit` (remote admin)
-- Extras: global search (Ctrl+K), Chart.js analytics, profile/password, site settings (name/tagline/telegram/support/UPI)
-- DB: SQLite default (zero-config) / MySQL via env, PDO + auto-migrate
-- Deploy: Dockerfile (php:8.2-apache) + render.yaml
+- Login / Register / Forgot (Telegram OTP optional) / Logout
+- Dashboard (key stats, expiration)
+- License Keys: list, bulk generate (HWID limit, package binding), edit, ban/unban/delete
+- Team (admin/reseller roles, wallet balance)
+- Referral codes, Tenants (multi-tenant codes, default `MEXX001`)
+- Server settings (branding, maintenance mode, API messages)
+- Logs, built-in API tester (`/tester`)
+- SDK validation API: `POST /api/connect/MEXX001` (game key + serial/device lock)
+- Branding: edit `PANEL_NAME` in env / `app/db.php`
 
-## Quick local run
+## Setup (cPanel/shared hosting)
+1. MySQL DB + user banao, `sql.sql` import karo (admin auto-creates).
+2. `app/db.php` me credentials **ya** `.env` file me `DB_HOST/DB_USER/DB_PASS/DB_NAME` set karo.
+3. Upload to `public_html`, open `/login`.
+
+Default login (change immediately!):
+- User: `mexxadmin` / Pass: `Mexx@9ad515f2`
+- Tenant: `MEXX001` (Android API: `/api/connect/MEXX001`)
+
+## Local run (needs MySQL/MariaDB)
 ```bash
-cp .env.example .env
-php -S localhost:8000 -t public
-# open http://localhost:8000
-# pehla signup = auto OWNER
+cp .env.example .env   # fill DB creds
+php -S localhost:8000  # .htaccess nahi chalega yaha; use: php -S localhost:8000 index.php?uri=login
 ```
-Owner CLI:
-```bash
-php scripts/create_owner.php "Owner" "owner@mail.com" "pass123"
-```
+Note: `php -S` ignores `.htaccess`, so open routes via `index.php?uri=login` etc.
 
-## Typical setup (admin)
-1. Login → Manage Mods → Add mod (e.g. BGMI ESP v2.1)
-2. Manage Plans → Add plan (mod + 30 days + ₹299)
-3. APKs → upload APK for mod
-4. Site Settings → UPI ID + branding save
-5. User Store se Buy → UTR → Orders → Approve = key auto-gen
-6. User: Downloads se APK + keys copy → app me `GET /api.php?key=&device_id=` verify
-
-## Render live (Docker)
-1. Push to GitHub, Render → New → Web Service → repo
-2. Runtime Docker, Dockerfile `./Dockerfile`
-3. Env: `DB_DRIVER=sqlite`, `APP_URL=https://YOUR.onrender.com`
-4. Deploy. SQLite `/var/www/html/data/database.sqlite` me banega.
-> Free Render pe uploads/SQLite redeploy par reset ho sakte hain. Permanent ke liye Disk ya MySQL (`DB_DRIVER=mysql` + host/name/user/pass).
-
-## API examples
-```bash
-curl "http://localhost:8000/api.php?key=XXXX-XXXX&device_id=DEV123"
-curl -X POST http://localhost:8000/api.php -d 'api_key=SECRET&action=block&key_id=12'
-```
+## Render deploy (Docker)
+Render has **no managed MySQL** — external MySQL chahiye (Railway/Aiven/free host):
+1. Push repo, Render → New Web Service → repo, Runtime Docker.
+2. Env set karo: `DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS` (+ optional branding).
+3. Us MySQL pe `sql.sql` import karo (admin row included).
+4. Deploy → `/login` kholo.
 
 ## Structure
 ```
-public/index.php login.php signup.php dashboard.php actions.php api.php download.php assets/
-src/db.php helpers.php auth.php
-config/schema.sql
-Dockerfile render.yaml .env.example
+index.php (router) | auth/ | views/ | api/connect.php | app/db.php functions.php icons.php
+assets/ghost-fx.js | sessions/ | sql.sql
 ```
