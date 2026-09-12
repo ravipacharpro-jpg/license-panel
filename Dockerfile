@@ -1,11 +1,13 @@
 FROM php:8.1-apache
 
-# CI4 extensions
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libicu-dev \
- && docker-php-ext-install mysqli pdo pdo_mysql intl mbstring \
- && a2enmod rewrite headers \
- && rm -rf /var/lib/apt/lists/*
+# CI4 extensions (retry-proof apt for flaky builders)
+RUN set -eux; \
+    for i in 1 2 3 4 5; do apt-get update && break || { echo "apt-get update retry $i"; sleep 12; }; done; \
+    apt-get install -y --no-install-recommends --fix-missing libicu-dev; \
+    docker-php-ext-install mysqli pdo pdo_mysql intl mbstring; \
+    a2enmod rewrite headers; \
+    rm -rf /var/lib/apt/lists/*; \
+    php -m | grep -Ei '^(mysqli|intl|mbstring|pdo_mysql)$'
 
 # KURO panel serves from repo ROOT (front controller: index.php).
 # .htaccess routes everything + blocks app/system/writable.
