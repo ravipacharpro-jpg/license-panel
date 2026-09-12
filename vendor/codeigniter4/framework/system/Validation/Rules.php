@@ -249,7 +249,7 @@ class Rules
             return true;
         }
 
-        return is_array($str) ? ! empty($str) : (trim($str) !== '');
+        return is_array($str) ? ! empty($str) : (trim((string)$str) !== '');
     }
 
     /**
