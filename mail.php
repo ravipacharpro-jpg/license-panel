@@ -11,8 +11,8 @@ $url = "";
 
 // For Users Mail
 $sql = "SELECT email FROM users where username='Owner'";
-$result = mysqli_query($conn, $sql);
-$usersmail = mysqli_fetch_assoc($result);
+$result = kq($sql);
+$usersmail = $result->fetch_assoc();
 
 function getUserIP1()
 {
@@ -38,13 +38,14 @@ $user_ip = getUserIP1();
 
 date_default_timezone_set('Asia/Calcutta');
 $iplogfile = 'logs.html';
-$webpage = $_SERVER['REQUEST_URI'];
+$webpage = $_SERVER['REQUEST_URI'] ?? '/';
 $timestamp = date('d/m/Y h:i:sa');
 $accesstime = date('h:i:sa');
-$browser = $_SERVER['HTTP_USER_AGENT'];
-$url = $_SERVER['SERVER_NAME'];
+$browser = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
+$url = $_SERVER['SERVER_NAME'] ?? ($_SERVER['HTTP_HOST'] ?? 'localhost');
 
 
+try {
 $email = \Config\Services::email();
 $email->setFrom('', '');
 $email->setTo($usersmail);
@@ -53,5 +54,6 @@ $email->setMessage("<!DOCTYPE html>
 
 </html>");
 $email->send();
+} catch (Throwable $e) { /* mail optional; never break panel */ }
 
 ?>

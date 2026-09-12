@@ -4,18 +4,18 @@ include('mail.php');
 
 // for maintainece mode
 $sql1 ="select * from onoff where id=1";
-$result1 = mysqli_query($conn, $sql1);
-$userDetails1 = mysqli_fetch_assoc($result1);
+$result1 = kq($sql1);
+$userDetails1 = $result1->fetch_assoc();
 
 // for ftext and status
 $sql2 ="select * from _ftext where id=1";
-$result2 = mysqli_query($conn, $sql2);
-$userDetails2 = mysqli_fetch_assoc($result2);
+$result2 = kq($sql2);
+$userDetails2 = $result2->fetch_assoc();
 
 // for Features Status
 $sql3 = "SELECT * FROM Feature WHERE id=1";
-$result3 = mysqli_query($conn, $sql3);
-$ModFeatureStatus = mysqli_fetch_assoc($result3);
+$result3 = kq($sql3);
+$ModFeatureStatus = $result3->fetch_assoc();
 
 ?>
 

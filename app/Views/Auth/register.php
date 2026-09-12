@@ -5,8 +5,8 @@ include('mail.php');
 
 // For Credits
 $sql = "SELECT * FROM credit where id=1";
-$result = mysqli_query($conn, $sql);
-$credit = mysqli_fetch_assoc($result);
+$result = kq($sql);
+$credit = $result->fetch_assoc();
 
 ?>
 

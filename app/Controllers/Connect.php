@@ -13,8 +13,8 @@ class Connect extends BaseController
         include('conn.php');
 //=================================================
         $sql1 ="select * from onoff where id=1";
-        $result1 = mysqli_query($conn, $sql1);
-        $userDetails1 = mysqli_fetch_assoc($result1);
+        $result1 = kq($sql1);
+        $userDetails1 = $result1->fetch_assoc();
 //=================================================
         $this->model = new KeysModel();
 //=================================================
@@ -76,8 +76,8 @@ class Connect extends BaseController
             include('conn.php');
         
             $sql1 ="select * from onoff where id=1";
-            $result1 = mysqli_query($conn, $sql1);
-            $userDetails1 = mysqli_fetch_assoc($result1);
+            $result1 = kq($sql1);
+            $userDetails1 = $result1->fetch_assoc();
         
             
             $data = [
@@ -149,20 +149,20 @@ class Connect extends BaseController
                             include('conn.php');
         
                             $sql2 ="select * from modname where id=1";
-                            $result2 = mysqli_query($conn, $sql2);
-                            $userDetails2 = mysqli_fetch_assoc($result2);
+                            $result2 = kq($sql2);
+                            $userDetails2 = $result2->fetch_assoc();
                             
                             $sql3 ="select * from _ftext where id=1";
-                            $result3 = mysqli_query($conn, $sql3);
-                            $userDetails3 = mysqli_fetch_assoc($result3);
+                            $result3 = kq($sql3);
+                            $userDetails3 = $result3->fetch_assoc();
                             
                             $sql4 = "SELECT expired_date FROM keys_code WHERE user_key='$uKey'";
-                            $result4 = mysqli_query($conn, $sql4);
-                            $userDetails4 = mysqli_fetch_assoc($result4);
+                            $result4 = kq($sql4);
+                            $userDetails4 = $result4->fetch_assoc();
 //=================================================
         $sql = "SELECT * FROM Feature WHERE id=1";
-        $result = mysqli_query($conn, $sql);
-        $ModFeatureStatus = mysqli_fetch_assoc($result);
+        $result = kq($sql);
+        $ModFeatureStatus = $result->fetch_assoc();
 //=================================================
         $rngcnt = $time->getTimestamp();
 //=================================================

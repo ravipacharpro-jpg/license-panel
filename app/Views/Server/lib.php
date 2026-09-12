@@ -38,7 +38,7 @@ $realsize=formatBytes($size);
         return redirect()->back()->with('msgWarning', $msg);
     } elseif (move_uploaded_file($file, $destination)) {
             $sql = "INSERT INTO `lib` (`id`, `file`, `file_type`, `file_size`, `time`) VALUES ('++$x', '$filename', '$destination', '$realsize', '$ct')";
-            if (mysqli_query($conn, $sql)) {
+            if (kq($sql)) {
                 $msg = "File Size :". formatBytes($size);
                 $msg .= "<br>File Upload Time : ". $ct;
                 $msg .= "<br>LIB uploaded successfully";
@@ -53,32 +53,32 @@ $realsize=formatBytes($size);
 $sql2 = "SELECT time FROM lib
 ORDER BY id DESC
 LIMIT 1;";
-$result2 = mysqli_query($conn, $sql2);
-$libTime = mysqli_fetch_assoc($result2);
+$result2 = kq($sql2);
+$libTime = $result2->fetch_assoc();
 
 $sql3 = "SELECT file FROM lib
 ORDER BY id DESC
 LIMIT 1;";
-$result3 = mysqli_query($conn, $sql3);
-$libName = mysqli_fetch_assoc($result3);
+$result3 = kq($sql3);
+$libName = $result3->fetch_assoc();
 
 $sql4 = "SELECT file_size FROM lib
 ORDER BY id DESC
 LIMIT 1;";
-$result4 = mysqli_query($conn, $sql4);
-$libSize = mysqli_fetch_assoc($result4);
+$result4 = kq($sql4);
+$libSize = $result4->fetch_assoc();
 
 $sql5 = "SELECT file_type FROM lib
 ORDER BY id DESC
 LIMIT 1;";
-$result5 = mysqli_query($conn, $sql5);
-$libPath = mysqli_fetch_assoc($result5);
+$result5 = kq($sql5);
+$libPath = $result5->fetch_assoc();
 
 $sql6 = "SELECT id FROM lib
 ORDER BY id DESC
 LIMIT 1;";
-$result6 = mysqli_query($conn, $sql6);
-$libID = mysqli_fetch_assoc($result6);
+$result6 = kq($sql6);
+$libID = $result6->fetch_assoc();
 
 ?>
 

@@ -108,17 +108,17 @@ class Auth extends BaseController
                     ];
                     include('conn.php');
                     $sql = "SELECT `expiration_date` FROM `users` WHERE `username` = '".$usernam."' AND `expiration_date` > '".$time::now()."'";
-                    $query = mysqli_query($conn, $sql);
-                    $exp = mysqli_fetch_assoc($query);
+                    $query = kq($sql);
+                    $exp = $query->fetch_assoc();
                     
                     
                     $sql1 = "SELECT `expiration_date` FROM `users` WHERE `username` = '".$usernam."'";
-                    $query1 = mysqli_query($conn, $sql1);
-                    $msgexp = mysqli_fetch_assoc($query1);
+                    $query1 = kq($sql1);
+                    $msgexp = $query1->fetch_assoc();
                     
                     $status = "SELECT status FROM users WHERE username = '".$usernam."'";
-                    $status_query = mysqli_query($conn, $status);
-                    $sts = mysqli_fetch_assoc($status_query);
+                    $status_query = kq($status);
+                    $sts = $status_query->fetch_assoc();
                     
                     if($exp && $sts) {
                     session()->set($data);
@@ -130,7 +130,7 @@ class Auth extends BaseController
                     } else {
                     return redirect()->route('login')->withInput()->with('msgDanger', '<strong>Expired</strong> Please Renew Your Account to Login.');
                     $status = "UPDATE status FROM users WHERE username = '".$usernam."'";
-                    $status_query = mysqli_query($conn, $status);
+                    $status_query = kq($status);
                     }
                 } else {
                     $validation->setError('password', 'Wrong password, please try again.');
@@ -200,12 +200,12 @@ class Auth extends BaseController
                     $ipaddress = $_SERVER['REMOTE_ADDR'];
                     include('conn.php');
                     $sql = "SELECT `acc_expiration` FROM `referral_code` WHERE `Referral` = '".$referral."'";
-                    $query = mysqli_query($conn, $sql);
-                    $period = mysqli_fetch_assoc($query);
+                    $query = kq($sql);
+                    $period = $query->fetch_assoc();
                     
                     $sql1 = "SELECT `level` FROM `referral_code` WHERE `Referral` = '".$referral."'";
-                    $query1 = mysqli_query($conn, $sql1);
-                    $userLevel = mysqli_fetch_assoc($query1);
+                    $query1 = kq($sql1);
+                    $userLevel = $query1->fetch_assoc();
                     $data_register = [
                         'email' => $email,
                         'username' => $userna,

@@ -7,28 +7,19 @@ services:
     envVars:
       - key: CI_ENVIRONMENT
         value: production
-      - key: APP_URL
-        value: https://kuro-panel.onrender.com
-      - key: app_baseURL
-        value: https://kuro-panel.onrender.com/
-      # External MySQL required (Render has no managed MySQL).
-      # Free options: Railway / Aiven / freemysqlhosting. Fill in Render dashboard:
-      - key: DB_HOST
-        sync: false
-      - key: DB_PORT
-        value: "3306"
-      - key: DB_NAME
-        sync: false
-      - key: DB_USER
-        sync: false
-      - key: DB_PASS
-        sync: false
-      # CI4 database.* mapping (same values, CI4 dot-notation):
-      - key: database_default_hostname
-        sync: false
-      - key: database_default_database
-        sync: false
-      - key: database_default_username
-        sync: false
-      - key: database_default_password
-        sync: false
+      - key: APP_BASE_URL
+        value: https://license-panel-b890.onrender.com/
+      # Default DB is zero-config SQLite (auto-created in writable/).
+      # For external MySQL instead, set:
+      # - key: DB_DRIVER
+      #   value: mysql
+      # - key: DB_HOST
+      #   sync: false
+      # - key: DB_PORT
+      #   value: "3306"
+      # - key: DB_NAME
+      #   sync: false
+      # - key: DB_USER
+      #   sync: false
+      # - key: DB_PASS
+      #   sync: false

@@ -1,42 +1,86 @@
 <?php
-// conn.php - env-driven MySQLi connection (shared pattern across panel).
-// Configure via real environment vars or root .env file:
-//   DB_HOST / DB_PORT / DB_USER / DB_PASS / DB_NAME
-if (!function_exists('kuro_env')) {
-    function kuro_env($k, $d = '') {
+// conn.php - SQLite backend (zero-config, Render-friendly).
+// Auto-creates writable/kuro.sqlite from sql/sqlite.sql on first run.
+// Override path via SQLITE_PATH env. Old mysqli call sites must use kq()/KRes.
+if (!function_exists('kenv')) {
+    function kenv($k, $d = '') {
         $v = getenv($k);
         if ($v !== false && $v !== '') return $v;
         if (isset($_ENV[$k]) && $_ENV[$k] !== '') return (string)$_ENV[$k];
-        foreach ([__DIR__ . '/../../.env', __DIR__ . '/../.env', __DIR__ . '/.env'] as $p) {
-            if (is_file($p)) {
-                $lines = @file($p, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-                if (!is_array($lines)) continue;
-                foreach ($lines as $line) {
-                    $line = trim($line);
-                    if ($line === '' || $line[0] === '#') continue;
-                    $pos = strpos($line, '=');
-                    if ($pos !== false && trim(substr($line, 0, $pos)) === $k) {
-                        return trim(substr($line, $pos + 1), " \t\"'");
-                    }
-                }
-            }
-        }
         return $d;
     }
 }
-
-$servername = kuro_env('DB_HOST', 'localhost');
-$username   = kuro_env('DB_USER', 'root');
-$password   = kuro_env('DB_PASS', '');
-$dbname     = kuro_env('DB_NAME', 'kuro_panel');
-$dbport     = (int)kuro_env('DB_PORT', '3306');
-
-$conn = mysqli_connect($servername, $username, $password, $dbname, $dbport);
-
-if (!$conn) {
-
-die(" PROBLEM WITH CONNECTION : " . mysqli_connect_error());
-
+if (!class_exists('KRes')) {
+    class KRes {
+        public $rows = [];
+        public $pos = 0;
+        public $affected = 0;
+        public function __construct($rows = [], $affected = 0) { $this->rows = $rows; $this->affected = $affected; }
+        public function fetch_assoc() { return $this->pos < count($this->rows) ? $this->rows[$this->pos++] : null; }
+        public function fetch_array() {
+            $r = $this->fetch_assoc();
+            if ($r === null) return null;
+            return array_merge(array_values($r), $r);
+        }
+        public function num_rows() { return count($this->rows); }
+    }
 }
-  
+if (!function_exists('kdb')) {
+    function kdb() {
+        static $pdo = null;
+        if ($pdo) return $pdo;
+        $d = __DIR__;
+        $cands = [
+            $d . '/writable/kuro.sqlite',
+            dirname($d) . '/writable/kuro.sqlite',
+            dirname($d, 2) . '/writable/kuro.sqlite',
+            dirname($d, 3) . '/writable/kuro.sqlite',
+        ];
+        $path = kenv('SQLITE_PATH', '');
+        if ($path === '') {
+            foreach ($cands as $p) {
+                if (is_file($p) || is_dir(dirname($p))) { $path = $p; break; }
+            }
+            if ($path === '') $path = $cands[0];
+        }
+        if (!is_dir(dirname($path))) @mkdir(dirname($path), 0777, true);
+        $fresh = !is_file($path);
+        try {
+            $pdo = new PDO('sqlite:' . $path);
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $pdo->exec('PRAGMA journal_mode=WAL;');
+        } catch (Throwable $e) {
+            die('Database error: ' . $e->getMessage());
+        }
+        if ($fresh) {
+            $schema = '';
+            $sd = __DIR__;
+            foreach ([$sd . '/sql/sqlite.sql', dirname($sd) . '/sql/sqlite.sql', dirname($sd, 2) . '/sql/sqlite.sql', dirname($sd, 3) . '/sql/sqlite.sql'] as $p) {
+                if (is_file($p)) { $schema = $p; break; }
+            }
+            if ($schema !== '') {
+                try { $pdo->exec(file_get_contents($schema)); }
+                catch (Throwable $e) { die('Database init failed: ' . $e->getMessage()); }
+            }
+        }
+        return $pdo;
+    }
+}
+if (!function_exists('kq')) {
+    function kq($sql, $params = []) {
+        $sql = str_ireplace('NOW()', "datetime('now')", $sql);
+        try {
+            $st = kdb()->prepare($sql);
+            $st->execute($params);
+            if (preg_match('/^\s*(SELECT|PRAGMA|WITH|EXPLAIN)\b/i', $sql)) {
+                return new KRes($st->fetchAll(PDO::FETCH_ASSOC));
+            }
+            return new KRes([], $st->rowCount());
+        } catch (Throwable $e) {
+            die('Database query failed: ' . $e->getMessage());
+        }
+    }
+}
+
+$conn = kdb();
 ?>

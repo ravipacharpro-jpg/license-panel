@@ -4,52 +4,48 @@ include('conn.php');
 include('mail.php');
 include('UserMail.php');
 
-// Add connection error handling
+// conn.php (kdb) already dies on connection failure; $conn is a PDO instance.
 if (!$conn) {
-    die("Connection failed: " . mysqli_connect_error());
+    die("Connection failed.");
 }
 
 // For Credits
 $sql = "SELECT * FROM credit where id=1";
-$result = mysqli_query($conn, $sql);
-$credit = mysqli_fetch_assoc($result);
-mysqli_free_result($result);
+$result = kq($sql);
+$credit = $result->fetch_assoc();
+$result = null;
 
 // For Keys count
 $sql = "SELECT COUNT(*) as id_keys FROM keys_code";
-$result = mysqli_query($conn, $sql);
-$keycount = mysqli_fetch_assoc($result);
-mysqli_free_result($result);
+$result = kq($sql);
+$keycount = $result->fetch_assoc();
+$result = null;
 
 // For Active Keys count
 $sql = "SELECT COUNT(devices) as devices FROM keys_code";
-$result = mysqli_query($conn, $sql);
-$active = mysqli_fetch_assoc($result);
-mysqli_free_result($result);
+$result = kq($sql);
+$active = $result->fetch_assoc();
+$result = null;
 
 // For In-Active Keys Count
 $sql = "SELECT COUNT(*) as devices FROM keys_code where devices IS NULL";
-$result = mysqli_query($conn, $sql);
-$inactive = mysqli_fetch_assoc($result);
-mysqli_free_result($result);
+$result = kq($sql);
+$inactive = $result->fetch_assoc();
+$result = null;
 
 // For Users Count
 $sql = "SELECT COUNT(*) as id_users FROM users";
-$result = mysqli_query($conn, $sql);
-$users = mysqli_fetch_assoc($result);
-mysqli_free_result($result);
+$result = kq($sql);
+$users = $result->fetch_assoc();
+$result = null;
 
 $userid = session()->userid;
 $sql = "SELECT `expiration_date` FROM `users` WHERE `id_users` = ?";
-$stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, "s", $userid);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-$period = mysqli_fetch_assoc($result);
-mysqli_stmt_close($stmt);
+$result = kq($sql, [$userid]);
+$period = $result->fetch_assoc();
 
 // Close the connection when done with all queries
-mysqli_close($conn);
+$conn = null;
 
 function HoursToDays($value)
 {

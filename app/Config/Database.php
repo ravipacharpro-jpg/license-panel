@@ -35,8 +35,8 @@ class Database extends Config
 		'hostname' => 'localhost',
 		'username' => 'root',
 		'password' => '',
-		'database' => 'kuro_panel',
-		'DBDriver' => 'MySQLi',
+		'database' => 'kuro.sqlite',
+		'DBDriver' => 'SQLite3',
 		'DBPrefix' => '',
 		'pConnect' => false,
 		'DBDebug'  => (ENVIRONMENT !== 'production'),
@@ -48,6 +48,7 @@ class Database extends Config
 		'strictOn' => false,
 		'failover' => [],
 		'port'     => 3306,
+		'foreignKeys' => true,
 	];
 
 	/**
@@ -92,6 +93,7 @@ class Database extends Config
 
 		// Plain env vars (Render/cPanel friendly) override defaults.
 		// Supports both DB_HOST style and CI4 database.default.* style.
+		// Default engine is SQLite (zero-config). Set DB_DRIVER=mysql + creds for MySQL.
 		$get = function (string $plain, string $dotted, $fallback) {
 			$v = getenv($plain);
 			if ($v !== false && $v !== '') return $v;
@@ -101,11 +103,37 @@ class Database extends Config
 			if (isset($_ENV[$dotted]) && $_ENV[$dotted] !== '') return $_ENV[$dotted];
 			return $fallback;
 		};
-		$this->default['hostname'] = $get('DB_HOST', 'database.default.hostname', $this->default['hostname']);
-		$this->default['username'] = $get('DB_USER', 'database.default.username', $this->default['username']);
-		$this->default['password'] = $get('DB_PASS', 'database.default.password', $this->default['password']);
-		$this->default['database'] = $get('DB_NAME', 'database.default.database', $this->default['database']);
-		$this->default['port']     = (int)$get('DB_PORT', 'database.default.port', $this->default['port']);
+		$driver = strtolower((string)$get('DB_DRIVER', 'database.default.DBDriver', 'sqlite'));
+		if ($driver === 'mysql' || $driver === 'mysqli') {
+			$this->default['DBDriver'] = 'MySQLi';
+			$this->default['hostname'] = $get('DB_HOST', 'database.default.hostname', 'localhost');
+			$this->default['username'] = $get('DB_USER', 'database.default.username', 'root');
+			$this->default['password'] = $get('DB_PASS', 'database.default.password', '');
+			$this->default['database'] = $get('DB_NAME', 'database.default.database', 'kuro_panel');
+			$this->default['port']     = (int)$get('DB_PORT', 'database.default.port', 3306);
+		} else {
+			$this->default['DBDriver'] = 'SQLite3';
+			$sqlite = (string)$get('SQLITE_PATH', 'database.default.database', '');
+			if ($sqlite === '') {
+				$sqlite = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'writable' . DIRECTORY_SEPARATOR . 'kuro.sqlite';
+			}
+			$this->default['database'] = $sqlite;
+			$this->default['DBPrefix'] = '';
+			$this->default['foreignKeys'] = true;
+			// Zero-config: create + seed DB file on first run.
+			if ($sqlite !== ':memory:' && !is_file($sqlite)) {
+				if (!is_dir(dirname($sqlite))) @mkdir(dirname($sqlite), 0777, true);
+				$schema = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'sql' . DIRECTORY_SEPARATOR . 'sqlite.sql';
+				try {
+					$pdo = new \PDO('sqlite:' . $sqlite);
+					$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+					if (is_file($schema)) $pdo->exec(file_get_contents($schema));
+					$pdo = null;
+				} catch (\Throwable $e) {
+					// CI will surface a proper DB error below.
+				}
+			}
+		}
 	}
 
 	//--------------------------------------------------------------------

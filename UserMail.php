@@ -16,15 +16,15 @@ $user = $this->user;
 $username = getName($user);
 
 $sql = "SELECT `email` from `users` where username='$username'";
-$result = mysqli_query($conn, $sql);
-$usermail = mysqli_fetch_array($result);
+$result = kq($sql);
+$usermail = $result->fetch_array();
 
 date_default_timezone_set('Asia/Calcutta');
 $timestamp = date('d/m/Y h:i:sa');
 $accesstime = date('h:i:sa');
-$webpage = $_SERVER['REQUEST_URI'];
-$browser = $_SERVER['HTTP_USER_AGENT'];
-$url = $_SERVER['SERVER_NAME'];
+$webpage = $_SERVER['REQUEST_URI'] ?? '/';
+$browser = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
+$url = $_SERVER['SERVER_NAME'] ?? ($_SERVER['HTTP_HOST'] ?? 'localhost');
 $server = $_SERVER['HTTP_HOST'];
 
 function getUserIP()
@@ -48,15 +48,17 @@ function getUserIP()
 }
 $user_ip = getUserIP();
 
-    if (isset($username)||($email)) {  
+    if (isset($username)||($email)) {
+        try {
         $email = \Config\Services::email();
         $email->setFrom('', '');
         $email->setTo($usermail);
-        
+
         $email->setSubject("[$server]✔ Logged in as $username at $timestamp");
         $email->setMessage("<!DOCTYPE html>
 
 ");
 $email->send();
+        } catch (Throwable $e) { /* mail optional; never break panel */ }
 }
 ?>

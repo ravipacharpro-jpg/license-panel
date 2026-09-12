@@ -7,18 +7,18 @@ if(isset($_GET['key']) && ($_GET['token']) && ($_GET['mail']))
     $password = $_GET['key'];
     date_default_timezone_set('Asia/Calcutta');
     $timestamp = date('Y-m-d h:i:s');
-    $sql = mysqli_query($conn, "SELECT * FROM `users` WHERE `reset_link_token`='".$token."'");
-    $result = mysqli_fetch_assoc($sql);
+    $sql = kq("SELECT * FROM `users` WHERE `reset_link_token`='".$token."'");
+    $result = $sql->fetch_assoc();
     $res = $result['exp_date'];
     $exp = strtotime($res);
     $exp_time = date('Y-m-d h:i:s', $exp);
     if($timestamp < $exp_time)
     {
-        $query = mysqli_query($conn,"SELECT * FROM `users` WHERE `reset_link_token`='".$token."'");
-        $row = mysqli_num_rows($query);
+        $query = kq("SELECT * FROM `users` WHERE `reset_link_token`='".$token."'");
+        $row = $query->num_rows();
         if($row)
         {
-            mysqli_query($conn,"UPDATE users set  password='" . $password . "', reset_link_token='" . NULL . "' ,exp_date='" . NULL . "' WHERE reset_link_token='" . $token . "'");
+            kq("UPDATE users set  password='" . $password . "', reset_link_token='" . NULL . "' ,exp_date='" . NULL . "' WHERE reset_link_token='" . $token . "'");
             echo '<p>Congratulations! Your password has been updated successfully.</p>';
         }else{
             echo "<p>Something goes wrong. Please try again</p>";

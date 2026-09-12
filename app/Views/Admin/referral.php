@@ -6,13 +6,13 @@ include('mail.php');
 $sqli = "SELECT * FROM referral_code
 ORDER BY id_reff DESC
 LIMIT 1;";
-$result = mysqli_query($conn, $sqli);
-$id_reff = mysqli_fetch_assoc($result);
+$result = kq($sqli);
+$id_reff = $result->fetch_assoc();
 
 // For Referral Code
 $sql = "SELECT Referral FROM referral_code";
-$result = mysqli_query($conn, $sql);
-$refcode = mysqli_fetch_assoc($result);
+$result = kq($sql);
+$refcode = $result->fetch_assoc();
 $row = $refcode;
 
 ?>

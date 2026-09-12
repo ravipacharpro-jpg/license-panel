@@ -6,3 +6,4 @@ writable/cache/*
 !writable/session/index.html
 *.log
 .DS_Store
+writable/kuro.sqlite*
