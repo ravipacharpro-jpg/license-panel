@@ -1,43 +1,40 @@
-# MEXX SDK Panel — Ghost UI License-Key Panel
+# KURO Panel — Ghost Theme Edition
 
-Fresh vanilla PHP + MySQLi panel with **ghost click FX** (phantom pop + synth ghost voice on every button, no audio files) and **3 themes** (Ghost Dark / Ghost Blue / Ghost Light, cookie-based, topbar sparkle switch).
+CodeIgniter 4 mod/key panel (keys, users, referrals, ESP feature toggles, modname, on/off maintenance, device-locked key validation API) with the **Ghost theme system**: 3 variants (Ghost Dark / Ghost Blue / Ghost Light) + ghost click FX (phantom pop + synth voice) panel-wide.
 
-## Features
-- Login / Register / Forgot (Telegram OTP optional) / Logout
-- Dashboard (key stats, expiration)
-- License Keys: list, bulk generate (HWID limit, package binding), edit, ban/unban/delete
-- Team (admin/reseller roles, wallet balance)
-- Referral codes, Tenants (multi-tenant codes, default `MEXX001`)
-- Server settings (branding, maintenance mode, API messages)
-- Logs, built-in API tester (`/tester`)
-- SDK validation API: `POST /api/connect/MEXX001` (game key + serial/device lock)
-- Branding: edit `PANEL_NAME` in env / `app/db.php`
+## Ghost theme
+- Switcher in navbar (stars icon) + persists via `ghost_theme` cookie
+- Files: `app/Views/Layout/Ghost.php` (CSS vars + switcher styles), `assets/ghost-fx.js` (click FX, auto-tints from `--accent-3`)
+- Layout wired in `app/Views/Layout/Starter.php` + `app/Views/Layout/Header.php`
 
 ## Setup (cPanel/shared hosting)
-1. MySQL DB + user banao, `sql.sql` import karo (admin auto-creates).
-2. `app/db.php` me credentials **ya** `.env` file me `DB_HOST/DB_USER/DB_PASS/DB_NAME` set karo.
-3. Upload to `public_html`, open `/login`.
+1. MySQL DB banao, `/storage` me di `ownerpanel.sql` jaisi schema import karo (tables: users, keys_code, referral_code, history, Feature, modname, onoff, lib, _ftext).
+2. `.env` me DB + `app.baseURL` set karo (ya `app/db.php` conn + `app/Config/Database.php`).
+3. Upload, open `/login`. Admin user DB me banao (bcrypt via `password_hash`).
 
-Default login (change immediately!):
-- User: `mexxadmin` / Pass: `Mexx@9ad515f2`
-- Tenant: `MEXX001` (Android API: `/api/connect/MEXX001`)
-
-## Local run (needs MySQL/MariaDB)
+## Local run (needs MySQL/MariaDB + PHP 8.0/8.1)
 ```bash
-cp .env.example .env   # fill DB creds
-php -S localhost:8000  # .htaccess nahi chalega yaha; use: php -S localhost:8000 index.php?uri=login
+# DB
+mysql -u root -e "CREATE DATABASE kuro_panel"
+mysql -u root kuro_panel < ownerpanel.sql
+# admin pass reset:
+php -r '$h=password_hash("admin123",PASSWORD_BCRYPT); echo $h;'
+mysql -u root kuro_panel -e "UPDATE users SET password='<hash>' WHERE username='admin'"
+# serve (docroot = public/)
+php -S localhost:8080 -t public
 ```
-Note: `php -S` ignores `.htaccess`, so open routes via `index.php?uri=login` etc.
 
-## Render deploy (Docker)
-Render has **no managed MySQL** — external MySQL chahiye (Railway/Aiven/free host):
-1. Push repo, Render → New Web Service → repo, Runtime Docker.
-2. Env set karo: `DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS` (+ optional branding).
-3. Us MySQL pe `sql.sql` import karo (admin row included).
-4. Deploy → `/login` kholo.
+## Render deploy (Docker, external MySQL)
+Render has **no managed MySQL** — Railway/Aiven/free host use karo:
+1. Push, Render → New Web Service → repo, Runtime Docker.
+2. Env: `DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS`, `APP_BASE_URL=https://<app>.onrender.com/`, `CI_ENVIRONMENT=production`.
+3. Import schema into that MySQL, create admin.
+4. Deploy → `/login`.
+
+## Key validation API (mod menus)
+`POST /connect` with `game`, `user_key`, `serial` → `{status, data:{real, token, modname, ESP/Item/AIM..., expired_date, device...}}`. Maintenance mode via `onoff` table.
 
 ## Structure
 ```
-index.php (router) | auth/ | views/ | api/connect.php | app/db.php functions.php icons.php
-assets/ghost-fx.js | sessions/ | sql.sql
+public/index.php (front) | app/Controllers (Auth/Keys/User/Connect) | app/Views (Layout inc. Ghost, Auth, Keys, Admin, User, Server) | app/Models | assets/ghost-fx.js
 ```

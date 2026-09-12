@@ -1,5 +1,8 @@
 .env
-sessions/sess_*
-sessions/ci_session*
+writable/session/ci_session*
+writable/logs/*
+writable/cache/*
+!writable/session/.gitkeep
+!writable/session/index.html
 *.log
 .DS_Store

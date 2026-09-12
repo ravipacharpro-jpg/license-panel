@@ -1,14 +1,18 @@
 services:
   - type: web
-    name: mexx-panel
+    name: kuro-panel
     runtime: docker
     dockerfilePath: ./Dockerfile
     autoDeploy: true
     envVars:
+      - key: CI_ENVIRONMENT
+        value: production
       - key: APP_URL
-        value: https://mexx-panel.onrender.com
+        value: https://kuro-panel.onrender.com
+      - key: app_baseURL
+        value: https://kuro-panel.onrender.com/
       # External MySQL required (Render has no managed MySQL).
-      # Free options: Railway / Aiven / freemysqlhosting. Fill these in Render dashboard:
+      # Free options: Railway / Aiven / freemysqlhosting. Fill in Render dashboard:
       - key: DB_HOST
         sync: false
       - key: DB_PORT
@@ -19,7 +23,12 @@ services:
         sync: false
       - key: DB_PASS
         sync: false
-      - key: PANEL_NAME
-        value: "FEATURESTIC LEAKS"
-      - key: PANEL_SUBTITLE
-        value: "SDK LICENSE MANAGEMENT"
+      # CI4 database.* mapping (same values, CI4 dot-notation):
+      - key: database_default_hostname
+        sync: false
+      - key: database_default_database
+        sync: false
+      - key: database_default_username
+        sync: false
+      - key: database_default_password
+        sync: false
