@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: license-panel
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    envVars:
+      - key: DB_DRIVER
+        value: sqlite
+      - key: APP_URL
+        value: https://license-panel.onrender.com
+      - key: REFERRAL_PERCENT
+        value: "10"
+      # MySQL use karna ho to neeche uncomment + fill karo:
+      # - key: DB_DRIVER
+      #   value: mysql
+      # - key: DB_HOST
+      #   sync: false
+      # - key: DB_PORT
+      #   value: "3306"
+      # - key: DB_NAME
+      #   sync: false
+      # - key: DB_USER
+      #   sync: false
+      # - key: DB_PASS
+      #   sync: false

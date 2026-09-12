@@ -1,0 +1,18 @@
+Options -MultiViews
+RewriteEngine On
+
+# Force HTTPS behind Render proxy is handled by app; keep clean URLs
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+# keep /api/validate working as file
+RewriteRule ^api/validate$ api/validate.php [L]
+
+<FilesMatch "\.(env|sqlite|db)$">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
