@@ -250,7 +250,7 @@ class FormatRules
             return false;
         }
 
-        switch (strtolower($which)) {
+        switch (strtolower($which ?? '')) {
             case 'ipv4':
                 $which = FILTER_FLAG_IPV4;
                 break;

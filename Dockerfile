@@ -11,7 +11,7 @@ WORKDIR /app
 COPY --chown=application:application . /app/
 
 RUN mkdir -p writable/cache writable/logs writable/session writable/uploads \
- && chmod -R 775 writable \
+ && chmod -R 777 writable \
  && (php -m | grep -Ei '^(mysqli|intl|mbstring|pdo_mysql)$' || (echo 'REQUIRED PHP EXT MISSING'; php -m; exit 1))
 
 EXPOSE 80
