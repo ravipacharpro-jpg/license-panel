@@ -29,25 +29,25 @@ $apiBase = ($isHttps ? 'https://' : 'http://') . $hostH . '/api/validate';
 <div class="glow-orb w-[380px] h-[380px] bg-cyan-500 top-40 -right-24"></div>
 
 <!-- NAV -->
-<nav class="relative z-10 max-w-6xl mx-auto flex items-center justify-between px-5 py-5">
-  <div class="flex items-center gap-3">
-    <div class="w-10 h-10 rounded-2xl btn-glow flex items-center justify-center">
+<nav class="relative z-10 w-full max-w-6xl mx-auto flex items-center justify-between gap-4 px-5 sm:px-6 lg:px-8 py-5">
+  <div class="flex items-center gap-3 min-w-0 shrink-0">
+    <div class="w-10 h-10 rounded-2xl btn-glow flex items-center justify-center shrink-0">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
     </div>
-    <div class="font-extrabold text-lg tracking-tight"><?= e($appName) ?></div>
+    <div class="font-extrabold text-lg tracking-tight truncate"><?= e($appName) ?></div>
   </div>
-  <div class="flex gap-2">
+  <div class="flex items-center justify-end gap-2 ml-auto shrink-0">
     <?php if ($user): ?>
-      <a href="dashboard.php" class="btn-glow px-5 py-2.5 rounded-xl font-semibold text-sm">Dashboard</a>
+      <a href="dashboard.php" class="btn-glow inline-flex items-center justify-center whitespace-nowrap px-5 py-2.5 rounded-xl font-semibold text-sm">Dashboard</a>
     <?php else: ?>
-      <a href="login.php" class="glass-soft px-5 py-2.5 rounded-xl text-sm font-semibold hover:border-purple-400/50">Login</a>
-      <a href="signup.php" class="btn-glow px-5 py-2.5 rounded-xl font-semibold text-sm">Get Started</a>
+      <a href="login.php" class="glass-soft inline-flex items-center justify-center whitespace-nowrap px-5 py-2.5 rounded-xl text-sm font-semibold hover:border-purple-400/50">Login</a>
+      <a href="signup.php" class="btn-glow inline-flex items-center justify-center whitespace-nowrap px-5 py-2.5 rounded-xl font-semibold text-sm">Get Started</a>
     <?php endif; ?>
   </div>
 </nav>
 
 <!-- HERO -->
-<header class="relative z-10 max-w-6xl mx-auto px-5 pt-10 pb-8 text-center">
+<header class="relative z-10 w-full max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 pt-10 pb-8 text-center">
   <div class="fade-up inline-flex items-center gap-2 glass-soft px-4 py-1.5 text-xs text-purple-200 mb-5">
     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
     LIVE • License + Wallet + Referral System
@@ -75,7 +75,7 @@ $apiBase = ($isHttps ? 'https://' : 'http://') . $hostH . '/api/validate';
 </header>
 
 <!-- FEATURES -->
-<section class="relative z-10 max-w-6xl mx-auto px-5 grid md:grid-cols-3 gap-4 pb-8">
+<section class="relative z-10 w-full max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 grid md:grid-cols-3 gap-4 pb-8">
   <div class="glass card-hover tilt p-6 fade-up">
     <div class="text-2xl font-bold mb-1 neon-text">01</div>
     <h3 class="font-bold text-lg mb-1">Smart Key Engine</h3>
@@ -94,7 +94,7 @@ $apiBase = ($isHttps ? 'https://' : 'http://') . $hostH . '/api/validate';
 </section>
 
 <!-- PRICING -->
-<section class="relative z-10 max-w-6xl mx-auto px-5 pb-10">
+<section class="relative z-10 w-full max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 pb-10">
   <h2 class="text-center text-2xl md:text-3xl font-extrabold mb-6">Simple <span class="neon-text">Pricing</span></h2>
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
     <div class="glass card-hover tilt p-6 text-center"><div class="text-sm text-slate-300">1 Day</div><div class="text-3xl font-extrabold mt-1">₹<?= e($p1) ?></div><div class="text-xs text-slate-400 mt-1">Trial key</div></div>
