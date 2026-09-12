@@ -10,6 +10,10 @@ $refPct = get_setting('referral_percent','10');
 $hostH = $_SERVER['HTTP_HOST'] ?? 'your-app.onrender.com';
 $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
 $apiBase = ($isHttps ? 'https://' : 'http://') . $hostH . '/api/validate';
+$tagline = site_tagline();
+try {
+  $modsShow = db()->query("SELECT * FROM mods WHERE status='active' ORDER BY id DESC LIMIT 6")->fetchAll();
+} catch (Throwable $ex) { $modsShow = []; }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -56,8 +60,8 @@ $apiBase = ($isHttps ? 'https://' : 'http://') . $hostH . '/api/validate';
     Sell License Keys<br><span class="neon-text">Like a Pro Panel</span>
   </h1>
   <p class="fade-up text-slate-300/90 max-w-2xl mx-auto mt-5 text-sm md:text-base">
-    Owner, Admin aur Reseller ke liye full role-based panel. Key generation, HWID lock,
-    wallet top-up, <?= e($refPct) ?>% referral commission, logs aur REST validate API — sab ek jagah.
+    <?= e($tagline) ?> — Owner, Admin aur Reseller ke liye full role-based panel. Mods + Plans, UPI QR orders,
+    key generation, HWID lock, wallet top-up, <?= e($refPct) ?>% referral commission, APK downloads aur REST API — sab ek jagah.
   </p>
   <div class="fade-up flex flex-col sm:flex-row gap-3 justify-center mt-8">
     <?php if ($user): ?>
@@ -78,20 +82,38 @@ $apiBase = ($isHttps ? 'https://' : 'http://') . $hostH . '/api/validate';
 <section class="relative z-10 w-full max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 grid md:grid-cols-3 gap-4 pb-8">
   <div class="glass card-hover tilt p-6 fade-up">
     <div class="text-2xl font-bold mb-1 neon-text">01</div>
-    <h3 class="font-bold text-lg mb-1">Smart Key Engine</h3>
-    <p class="text-sm text-slate-300">1 Day / 7 Days / 30 Days / Lifetime keys, device limit, HWID lock, active / expired / revoked status.</p>
+    <h3 class="font-bold text-lg mb-1">Mods + Plans Store</h3>
+    <p class="text-sm text-slate-300">Unlimited mods, hours/days/months/lifetime plans, UPI QR orders, approve pe auto key assign.</p>
   </div>
   <div class="glass card-hover tilt p-6 fade-up">
     <div class="text-2xl font-bold mb-1 neon-text">02</div>
     <h3 class="font-bold text-lg mb-1">Wallet + UPI Topup</h3>
-    <p class="text-sm text-slate-300">Reseller balance se key kharido. Manual UPI reference entry, admin approval, full transaction history.</p>
+    <p class="text-sm text-slate-300">QR scan karke pay karo, UTR submit karo. Admin approval, referral commission, full ledger.</p>
   </div>
   <div class="glass card-hover tilt p-6 fade-up">
     <div class="text-2xl font-bold mb-1 neon-text">03</div>
-    <h3 class="font-bold text-lg mb-1">Referral Commission</h3>
-    <p class="text-sm text-slate-300">Har user ka unique link. Referred recharge pe <?= e($refPct) ?>% auto commission + sales tree view.</p>
+    <h3 class="font-bold text-lg mb-1">API + APK Downloads</h3>
+    <p class="text-sm text-slate-300">GET /api.php verify, device lock, admin remote API, purchased mods ke APK downloads.</p>
   </div>
 </section>
+
+<?php if (!empty($modsShow)): ?>
+<!-- AVAILABLE MODS (same UI) -->
+<section class="relative z-10 w-full max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 pb-8">
+  <h2 class="text-center text-2xl md:text-3xl font-extrabold mb-2">Available <span class="neon-text">Mods</span></h2>
+  <p class="text-center text-xs text-slate-400 mb-6">Latest premium mods — license key ke liye Store kholo.</p>
+  <div class="grid md:grid-cols-3 gap-4">
+    <?php foreach ($modsShow as $mm): ?>
+    <div class="glass card-hover tilt p-6 flex flex-col">
+      <div class="flex items-start justify-between mb-2"><h3 class="font-bold text-lg"><?= e($mm['name']) ?></h3><?php if (!empty($mm['version'])): ?><span class="badge"><?= e($mm['version']) ?></span><?php endif; ?></div>
+      <p class="text-sm text-slate-400 mb-3"><?= e(mb_strimwidth($mm['description'] ?? 'Premium mod package', 0, 140, '…')) ?></p>
+      <?php if (!empty($mm['features'])): ?><div class="text-xs text-slate-300 mb-4 whitespace-pre-line glass-soft p-3"><?= e(mb_strimwidth($mm['features'], 0, 180, '…')) ?></div><?php endif; ?>
+      <a href="dashboard.php?tab=store<?= $user?'':'&need=login' ?>" class="btn-glow text-center rounded-xl py-2.5 font-bold text-sm mt-auto">Get License Key</a>
+    </div>
+    <?php endforeach; ?>
+  </div>
+</section>
+<?php endif; ?>
 
 <!-- PRICING -->
 <section class="relative z-10 w-full max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 pb-10">

@@ -88,8 +88,44 @@ function db(): PDO {
         $sql = file_get_contents($schemaFile);
         $pdo->exec($sql);
     }
+    migrate_sqlite_columns($pdo);
     seed_settings($pdo);
     return $pdo;
+}
+
+function table_columns(PDO $pdo, string $table): array {
+    try {
+        $st = $pdo->query("PRAGMA table_info($table)");
+        $cols = [];
+        foreach ($st->fetchAll() as $r) $cols[] = $r['name'];
+        return $cols;
+    } catch (Throwable $ex) { return []; }
+}
+
+function migrate_sqlite_columns(PDO $pdo): void {
+    // For existing DBs created before mods/plans update: add missing columns safely
+    $wants = [
+        'license_keys' => [
+            'mod_id' => 'INTEGER NULL',
+            'price' => 'REAL NOT NULL DEFAULT 0',
+            'sold_to' => 'INTEGER NULL',
+            'sold_at' => 'DATETIME NULL',
+            'device_id' => 'TEXT NULL',
+            'duration' => 'INTEGER NULL',
+        ],
+        'transactions' => [
+            'plan_id' => 'INTEGER NULL',
+            'upi_txn_id' => 'TEXT NULL',
+        ],
+    ];
+    foreach ($wants as $table => $cols) {
+        $existing = table_columns($pdo, $table);
+        foreach ($cols as $col => $def) {
+            if (!in_array($col, $existing, true)) {
+                try { $pdo->exec("ALTER TABLE $table ADD COLUMN $col $def"); } catch (Throwable $ex) {}
+            }
+        }
+    }
 }
 
 function migrate_mysql(PDO $pdo): void {
@@ -116,7 +152,13 @@ function migrate_mysql(PDO $pdo): void {
       device_limit INT NOT NULL DEFAULT 1,
       hwid TEXT NULL,
       status VARCHAR(20) NOT NULL DEFAULT 'active',
-      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      mod_id INT NULL,
+      price DECIMAL(12,2) NOT NULL DEFAULT 0,
+      sold_to INT NULL,
+      sold_at DATETIME NULL,
+      device_id VARCHAR(255) NULL,
+      duration INT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
     $pdo->exec("CREATE TABLE IF NOT EXISTS transactions (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -125,7 +167,9 @@ function migrate_mysql(PDO $pdo): void {
       amount DECIMAL(12,2) NOT NULL DEFAULT 0,
       reference VARCHAR(255) NULL,
       status VARCHAR(20) NOT NULL DEFAULT 'completed',
-      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      plan_id INT NULL,
+      upi_txn_id VARCHAR(100) NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
     $pdo->exec("CREATE TABLE IF NOT EXISTS logs (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -139,6 +183,56 @@ function migrate_mysql(PDO $pdo): void {
       k VARCHAR(100) PRIMARY KEY,
       v TEXT NOT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS mods (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(100) NOT NULL,
+      description TEXT NULL,
+      image_url VARCHAR(255) NULL,
+      version VARCHAR(50) NULL,
+      features TEXT NULL,
+      purchase_link VARCHAR(255) NULL,
+      status VARCHAR(20) NOT NULL DEFAULT 'active',
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS mod_plans (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      mod_id INT NOT NULL,
+      plan_name VARCHAR(100) NOT NULL,
+      duration INT NOT NULL DEFAULT 30,
+      duration_type VARCHAR(20) NOT NULL DEFAULT 'days',
+      price DECIMAL(10,2) NOT NULL DEFAULT 0,
+      features TEXT NULL,
+      status VARCHAR(20) NOT NULL DEFAULT 'active',
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS mod_apks (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      mod_id INT NOT NULL,
+      file_name VARCHAR(255) NOT NULL,
+      file_path VARCHAR(500) NOT NULL,
+      file_size INT NOT NULL DEFAULT 0,
+      uploaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS referral_tokens (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      code VARCHAR(20) NOT NULL UNIQUE,
+      created_by INT NOT NULL,
+      expires_at DATETIME NOT NULL,
+      status VARCHAR(20) NOT NULL DEFAULT 'active',
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+    // MySQL: add missing columns on old installs
+    $addCols = [
+        "ALTER TABLE license_keys ADD COLUMN IF NOT EXISTS mod_id INT NULL",
+        "ALTER TABLE license_keys ADD COLUMN IF NOT EXISTS price DECIMAL(12,2) NOT NULL DEFAULT 0",
+        "ALTER TABLE license_keys ADD COLUMN IF NOT EXISTS sold_to INT NULL",
+        "ALTER TABLE license_keys ADD COLUMN IF NOT EXISTS sold_at DATETIME NULL",
+        "ALTER TABLE license_keys ADD COLUMN IF NOT EXISTS device_id VARCHAR(255) NULL",
+        "ALTER TABLE license_keys ADD COLUMN IF NOT EXISTS duration INT NULL",
+        "ALTER TABLE transactions ADD COLUMN IF NOT EXISTS plan_id INT NULL",
+        "ALTER TABLE transactions ADD COLUMN IF NOT EXISTS upi_txn_id VARCHAR(100) NULL",
+    ];
+    foreach ($addCols as $q) { try { $pdo->exec($q); } catch (Throwable $ex) {} }
 }
 
 function seed_settings(PDO $pdo): void {
@@ -150,6 +244,11 @@ function seed_settings(PDO $pdo): void {
         'referral_percent' => '10',
         'app_name' => 'NEXUS License Panel',
         'upi_id' => 'owner@upi',
+        'site_tagline' => 'Premium Mod Panel',
+        'telegram_link' => '',
+        'support_email' => 'admin@example.com',
+        'admin_api_key' => '',
+        'signup_token_required' => '0',
     ];
     // detect driver for upsert syntax
     $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);

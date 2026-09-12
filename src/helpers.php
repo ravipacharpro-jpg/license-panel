@@ -144,6 +144,117 @@ function app_name(): string {
     return get_setting('app_name', 'NEXUS License Panel');
 }
 
+function site_tagline(): string {
+    return get_setting('site_tagline', 'Premium Mod Panel');
+}
+
+function support_email(): string {
+    return get_setting('support_email', 'admin@example.com');
+}
+
+function telegram_link(): string {
+    return get_setting('telegram_link', '');
+}
+
+// MultiPanelX-style: numeric duration + type -> expiry datetime or null
+function calc_expiry_plan(int $duration, string $type): ?string {
+    $type = strtolower($type);
+    if ($type === 'lifetime' || $duration <= 0) return null;
+    $now = new DateTime('now', new DateTimeZone('UTC'));
+    switch ($type) {
+        case 'minutes': $now->modify("+{$duration} minutes"); break;
+        case 'hours': $now->modify("+{$duration} hours"); break;
+        case 'months': $now->modify("+{$duration} months"); break;
+        case 'days':
+        default: $now->modify("+{$duration} days"); break;
+    }
+    return $now->format('Y-m-d H:i:s');
+}
+
+function plan_expiry_label(?int $duration, ?string $type): string {
+    if (!$type) return '-';
+    if (strtolower($type) === 'lifetime') return 'Lifetime';
+    return ((int)$duration) . ' ' . ucfirst((string)$type);
+}
+
+// Check if a sold key (sold_at + duration/type) is expired; if yes, optionally mark expired
+function plan_key_expired(array $key): bool {
+    if (empty($key['sold_at'])) return false;
+    $dur = (int)($key['duration'] ?? 0);
+    $type = strtolower((string)($key['duration_type'] ?? 'days'));
+    // legacy string types like 30days
+    if (in_array($key['duration_type'] ?? '', ['1day','7days','30days','lifetime'], true)) {
+        if (($key['duration_type'] ?? '') === 'lifetime') return false;
+        return !empty($key['expires_at']) && strtotime($key['expires_at'] . ' UTC') < time();
+    }
+    if ($type === 'lifetime' || $dur <= 0) return false;
+    $sold = strtotime($key['sold_at'] . ' UTC');
+    if ($sold === false) return false;
+    $exp = strtotime("+{$dur} {$type}", $sold);
+    return $exp !== false && time() > $exp;
+}
+
+function upi_pay_string(string $upiId, float $amount, string $name = 'Admin'): string {
+    return 'upi://pay?pa=' . urlencode($upiId) . '&pn=' . urlencode($name) . '&am=' . number_format($amount, 2, '.', '') . '&cu=INR';
+}
+
+function generate_token_code(PDO $pdo): string {
+    $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    for ($i = 0; $i < 30; $i++) {
+        $c = '';
+        for ($j = 0; $j < 8; $j++) $c .= $chars[random_int(0, strlen($chars) - 1)];
+        $st = $pdo->prepare('SELECT id FROM referral_tokens WHERE code = ?');
+        $st->execute([$c]);
+        if (!$st->fetch()) return $c;
+    }
+    return strtoupper(bin2hex(random_bytes(4)));
+}
+
+function ensure_admin_api_key(): string {
+    $k = get_setting('admin_api_key', '');
+    if ($k === '') {
+        $k = bin2hex(random_bytes(16));
+        set_setting('admin_api_key', $k);
+    }
+    return $k;
+}
+
+// Last 7 days labels + counts for Chart.js (sales + revenue)
+function chart_last7(PDO $pdo, ?int $userId = null): array {
+    $labels = []; $sales = []; $rev = [];
+    $map = [];
+    for ($i = 6; $i >= 0; $i--) {
+        $d = date('Y-m-d', strtotime("-$i days"));
+        $map[$d] = ['label' => date('D d', strtotime("-$i days")), 'sales' => 0, 'rev' => 0.0];
+    }
+    $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+    $dateExprSold = $driver === 'mysql' ? 'DATE(sold_at)' : "date(sold_at)";
+    $dateExprTx = $driver === 'mysql' ? 'DATE(created_at)' : "date(created_at)";
+    $cutoff = date('Y-m-d H:i:s', strtotime('-6 days 00:00:00'));
+    try {
+        if ($userId) {
+            $st = $pdo->prepare("SELECT $dateExprSold d, COUNT(*) c FROM license_keys WHERE sold_to = ? AND sold_at >= ? GROUP BY $dateExprSold");
+            $st->execute([$userId, $cutoff]);
+        } else {
+            $st = $pdo->prepare("SELECT $dateExprSold d, COUNT(*) c FROM license_keys WHERE sold_at >= ? GROUP BY $dateExprSold");
+            $st->execute([$cutoff]);
+        }
+        foreach ($st->fetchAll() as $r) { if (isset($map[$r['d']])) $map[$r['d']]['sales'] = (int)$r['c']; }
+    } catch (Throwable $ex) {}
+    try {
+        if ($userId) {
+            $st = $pdo->prepare("SELECT $dateExprTx d, SUM(ABS(amount)) t FROM transactions WHERE user_id = ? AND type='purchase' AND status IN ('completed','approved') AND created_at >= ? GROUP BY $dateExprTx");
+            $st->execute([$userId, $cutoff]);
+        } else {
+            $st = $pdo->prepare("SELECT $dateExprTx d, SUM(ABS(amount)) t FROM transactions WHERE type='purchase' AND status IN ('completed','approved') AND created_at >= ? GROUP BY $dateExprTx");
+            $st->execute([$cutoff]);
+        }
+        foreach ($st->fetchAll() as $r) { if (isset($map[$r['d']])) $map[$r['d']]['rev'] = (float)$r['t']; }
+    } catch (Throwable $ex) {}
+    foreach ($map as $m) { $labels[] = $m['label']; $sales[] = $m['sales']; $rev[] = $m['rev']; }
+    return [$labels, $sales, $rev];
+}
+
 function flash_set(string $type, string $msg): void {
     $_SESSION['flash'] = ['type' => $type, 'msg' => $msg];
 }
