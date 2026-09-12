@@ -99,7 +99,7 @@ class Time extends DateTime
             $time = $instance->format('Y-m-d H:i:s');
         }
 
-        parent::__construct($time, $this->timezone);
+        parent::__construct($time ?? 'now', $this->timezone);
     }
 
     /**
