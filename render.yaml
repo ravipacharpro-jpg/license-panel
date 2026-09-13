@@ -4,6 +4,10 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     autoDeploy: true
+    disk:
+      name: kuro-data
+      mountPath: /app/writable
+      sizeGB: 1
     envVars:
       - key: CI_ENVIRONMENT
         value: production
