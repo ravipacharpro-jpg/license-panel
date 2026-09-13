@@ -121,7 +121,7 @@
 <script>
     $(document).ready(function() {
         var csrfName = 'csrf_test_name';
-        var csrfHash = '<?= csrf_hash() ?>';
+        var csrfHash = $('meta[name="csrf-token"]').attr('content');
         var table = $('#datatable').DataTable({
             processing: true,
             serverSide: true,
