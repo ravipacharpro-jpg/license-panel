@@ -140,7 +140,11 @@ public function startDate(){
     {
         // ? API for DataTable Keys
         $model = $this->model;
-        return $model->API_getKeys();
+        $response = $model->API_getKeys();
+        // Return new CSRF token for DataTables subsequent requests
+        return $this->response->setJSON(array_merge(json_decode($response, true), [
+            csrf_token() => csrf_hash()
+        ]));
     }
 
     

@@ -120,13 +120,27 @@
 <?= script_tag("https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap5.min.js") ?>
 <script>
     $(document).ready(function() {
+        var csrfName = '<?= csrf_token() ?>';
+        var csrfHash = '<?= csrf_hash() ?>';
         var table = $('#datatable').DataTable({
             processing: true,
             serverSide: true,
             order: [
                 [0, "desc"]
             ],
-            ajax: "<?= site_url('keys/api') ?>",
+            ajax: {
+                url: "<?= site_url('keys/api') ?>",
+                type: "POST",
+                data: function(d) {
+                    d[csrfName] = csrfHash;
+                },
+                dataSrc: function(json) {
+                    if (json && json[csrfName]) {
+                        csrfHash = json[csrfName];
+                    }
+                    return json.data;
+                }
+            },
             columns: [{
                     data: 'id',
                     name: 'id_keys'
