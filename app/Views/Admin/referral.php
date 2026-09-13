@@ -146,7 +146,7 @@ $row = $refcode;
                 <div class="form-group mb-3">
                     <label for="set_saldo" class="form-label">You can set with multiple saldo</label>
                     <div class="input-group mt-2">
-                        <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
+                        <span class="input-group-text"><i class="bi bi-currency-rupee"></i></span>
                         <input type="number" class="form-control" name="set_saldo" id="set_saldo" minlength="1" maxlength="11" value="5">
                     </div>
                     <?php if ($validation->hasError('set_saldo')) : ?>

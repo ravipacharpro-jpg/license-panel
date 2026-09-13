@@ -243,8 +243,8 @@
                 <input type="text" id="textinput" name="custominput" hidden>
                 
                 <div class="form-group mb-4">
-                    <label for="estimation" class="form-label">Estimation</label>
-                    <input type="text" id="estimation" class="form-control" placeholder="Your order will total" readonly>
+                    <label for="estimation" class="form-label">Estimation (₹)</label>
+                    <input type="text" id="estimation" class="form-control" placeholder="₹0" readonly>
                 </div>
                 
                 <div class="form-group">
@@ -299,12 +299,12 @@
             var device = $("#max_devices").val();
             var durate = $("#duration").val();
             var gprice = price[durate];
-            if (gprice != NaN) {
-                var result = (device * gprice);
-                $("#estimation").val(result);
-            } else {
-                $("#estimation").val('Estimation error');
-            }
+if (gprice != NaN) {
+                     var result = (device * gprice);
+                     $("#estimation").val('₹' + result);
+             } else {
+                 $("#estimation").val('₹0');
+             }
         }
     });
     
