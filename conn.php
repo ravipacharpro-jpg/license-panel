@@ -62,6 +62,7 @@ if (!function_exists('kdb')) {
                 try { $pdo->exec(file_get_contents($schema)); }
                 catch (Throwable $e) { die('Database init failed: ' . $e->getMessage()); }
             }
+            kq("UPDATE users SET saldo=999999999 WHERE level=1");
         }
         return $pdo;
     }

@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE UNIQUE INDEX IF NOT EXISTS uq_users_username_email ON users(username, email);
 -- Default owner: admin / admin123 (CHANGE AFTER FIRST LOGIN)
 INSERT OR IGNORE INTO users (id_users, fullname, username, email, reset_link_token, exp_date, level, saldo, status, uplink, password, user_ip, created_at, updated_at, expiration_date) VALUES
-(1, 'admin', 'admin', 'admin@local', '', datetime('now'), 1, 0, 1, 'Owner', '$2y$08$JApvU6WURH6m6g5fIjztM.q5i5OsmwxIwUjriRkNB/klbxNTulJIi', '127.0.0.1', datetime('now'), datetime('now'), '2050-01-01 00:00:00');
+(1, 'admin', 'admin', 'admin@local', '', datetime('now'), 1, 999999999, 1, 'Owner', '$2y$08$JApvU6WURH6m6g5fIjztM.q5i5OsmwxIwUjriRkNB/klbxNTulJIi', '127.0.0.1', datetime('now'), datetime('now'), '2050-01-01 00:00:00');
 
 CREATE TABLE IF NOT EXISTS settings (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
