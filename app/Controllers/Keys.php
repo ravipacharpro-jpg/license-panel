@@ -13,6 +13,7 @@ class Keys extends BaseController
 
     public function __construct()
     {
+        include('conn.php');
         $this->userModel = new UserModel();
         $this->user = $this->userModel->getUser();
         $this->model = new KeysModel();

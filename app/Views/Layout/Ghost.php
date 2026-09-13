@@ -12,15 +12,48 @@ if (!in_array($g, ['nebula', 'azure', 'light'])) $g = 'nebula';
   --ghost-footer:rgba(93,63,159,.7);
 }
 html[data-theme="azure"]{
-  --ghost-accent:#60A5FA;
-  --ghost-accent2:#2563EB;
-  --ghost-glow:rgba(96,165,250,.45);
-  --accent-3:#60A5FA;
-  --ghost-nav:rgba(18,32,96,.85);
-  --ghost-footer:rgba(30,58,138,.7);
+  --ghost-accent:#06B6D4;
+  --ghost-accent2:#0891B2;
+  --ghost-glow:rgba(6,182,212,.55);
+  --accent-3:#06B6D4;
+  --ghost-nav:rgba(8,47,73,.9);
+  --ghost-footer:rgba(7,69,95,.85);
 }
 html[data-theme="azure"] body::after{
-  background:radial-gradient(circle, rgba(37,99,235,.28) 0%, rgba(10,18,60,.72) 100%) !important;
+  background:radial-gradient(ellipse at 50% 0%, rgba(6,182,212,.35) 0%, rgba(8,47,73,.95) 60%) !important;
+}
+html[data-theme="azure"] .custom-navbar{
+  box-shadow:0 4px 24px rgba(6,182,212,.18), inset 0 1px 0 rgba(255,255,255,.08);
+}
+html[data-theme="azure"] .btn-primary{
+  background:linear-gradient(135deg, var(--ghost-accent), var(--ghost-accent2)) !important;
+  box-shadow:0 4px 16px rgba(6,182,212,.35);
+}
+html[data-theme="azure"] .btn-primary:hover{
+  box-shadow:0 6px 24px rgba(6,182,212,.5);
+  transform:translateY(-2px);
+}
+html[data-theme="azure"] .btn-outline-primary{
+  border-width:2px;
+  box-shadow:inset 0 0 0 1px var(--ghost-accent);
+}
+html[data-theme="azure"] .btn-outline-primary:hover{
+  background:linear-gradient(135deg, var(--ghost-accent), var(--ghost-accent2)) !important;
+  box-shadow:0 4px 16px rgba(6,182,212,.35);
+}
+html[data-theme="azure"] .card{
+  border-color:rgba(6,182,212,.18);
+  box-shadow:0 8px 32px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.05);
+}
+html[data-theme="azure"] .form-control, 
+html[data-theme="azure"] .form-select{
+  border-color:rgba(6,182,212,.25);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.3);
+}
+html[data-theme="azure"] .form-control:focus, 
+html[data-theme="azure"] .form-select:focus{
+  border-color:var(--ghost-accent);
+  box-shadow:0 0 0 0.25rem rgba(6,182,212,.25), inset 0 1px 3px rgba(0,0,0,.3);
 }
 html[data-theme="light"]{
   --ghost-accent:#9333EA;
@@ -59,7 +92,7 @@ a{color:var(--ghost-accent);}
 .ghost-theme-dot{width:18px;height:18px;border-radius:50%;flex-shrink:0;position:relative;box-shadow:inset 0 0 0 1.5px currentColor, 0 0 8px -1px currentColor;}
 .ghost-theme-dot::after{content:"";position:absolute;inset:4px;border-radius:50%;background:currentColor;opacity:.3;}
 .ghost-theme-dot.dot-nebula{color:#A855F7;}
-.ghost-theme-dot.dot-azure{color:#60A5FA;}
+.ghost-theme-dot.dot-azure{color:#06B6D4;}
 .ghost-theme-dot.dot-light{color:#E9D5FF;}
 .ghost-theme-opt.active .ghost-theme-dot{box-shadow:inset 0 0 0 2px currentColor, 0 0 12px 0 currentColor;}
 .ghost-theme-check{margin-left:auto;color:var(--ghost-accent);opacity:0;}
@@ -74,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function(){
   dd.className = 'ghost-theme-dropdown';
   dd.innerHTML =
     '<div class="ghost-theme-opt" data-t="nebula"><span class="ghost-theme-dot dot-nebula"></span> Ghost Dark <span class="ghost-theme-check"><i class="bi bi-check-circle"></i></span></div>'+
-    '<div class="ghost-theme-opt" data-t="azure"><span class="ghost-theme-dot dot-azure"></span> Ghost Blue <span class="ghost-theme-check"><i class="bi bi-check-circle"></i></span></div>'+
+    '<div class="ghost-theme-opt" data-t="azure"><span class="ghost-theme-dot dot-azure"></span> Ghost Cyan <span class="ghost-theme-check"><i class="bi bi-check-circle"></i></span></div>'+
     '<div class="ghost-theme-opt" data-t="light"><span class="ghost-theme-dot dot-light"></span> Ghost Light <span class="ghost-theme-check"><i class="bi bi-check-circle"></i></span></div>';
   document.body.appendChild(dd);
   window._setGhostTheme = function(name){
