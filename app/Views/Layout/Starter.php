@@ -223,8 +223,9 @@
     </main>
     
     <footer class="py-3 text-white">
-        <div class="container">
-            <small class="text-warning">&copy; <?= date('Y') ?> - <?= BASE_NAME ?></small>
+        <div class="container text-center">
+            <small class="text-warning">&copy; <?= date('Y') ?> - <?= BASE_NAME ?></small><br>
+            <small><a href="https://t.me/L359D" target="_blank" style="color:#fff;"><i class="bi bi-telegram"></i> @L359D</a> &nbsp;|&nbsp; BUY PANEL DM HERE @L359D</small>
         </div>
     </footer>
     

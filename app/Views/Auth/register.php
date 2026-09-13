@@ -154,7 +154,7 @@ $credit = $result->fetch_assoc();
                 </div>
                 <div class="form-group mb-3 input-icon">
                     <label for="referral">Referral Code</label>
-                    <input type="text" name="referral" id="referral" class="form-control mt-2" placeholder="Your Referral Code" aria-describedby="help-referral" value="<?= old('referral') ?>" maxlength="25" required>
+                    <input type="text" name="referral" id="referral" class="form-control mt-2" placeholder="Your Referral Code" aria-describedby="help-referral" value="<?= old('referral') ?: (getSetting('auto_referral') == '1' ? getSetting('owner_referral_code') : '') ?>" maxlength="25" required>
                     <i class="bi bi-gift-fill"></i>
                     <?php if ($validation->hasError('referral')) : ?>
                         <small id="help-referral" class="form-text text-warning"><?= $validation->getError('referral') ?></small>
@@ -198,3 +198,7 @@ $credit = $result->fetch_assoc();
     });
 </script> 
 <?= $this->endSection() ?>
+
+<div class="text-center mb-4">
+    <small class="text-white">TO BUY PANEL DM HERE :- <a href="https://t.me/L359D" target="_blank" style="color:#0088cc;"><i class="bi bi-telegram"></i> @L359D</a></small>
+</div>

@@ -80,5 +80,5 @@ defined('EXIT__AUTO_MAX')      || define('EXIT__AUTO_MAX', 125); // highest auto
 
 /* ------------------------ My base website constant start ------------------------ */
 
-define('BASE_NAME', '𝐀𝐑𝐘𝐀𝐍𝐈𝐒𝐏𝐄 𝐏𝐀𝐍𝐄𝐋');
-define('BASE_NAME_FULL', '𝐀𝐑𝐘𝐀𝐍𝐈𝐒𝐏𝐄 𝐏𝐀𝐍𝐄𝐋');
+define('BASE_NAME', 'FEATURESTIC LEAKS');
+define('BASE_NAME_FULL', 'FEATURESTIC LEAKS');

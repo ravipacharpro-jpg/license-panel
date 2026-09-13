@@ -101,6 +101,16 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_users_username_email ON users(username, ema
 INSERT OR IGNORE INTO users (id_users, fullname, username, email, reset_link_token, exp_date, level, saldo, status, uplink, password, user_ip, created_at, updated_at, expiration_date) VALUES
 (1, 'admin', 'admin', 'admin@local', '', datetime('now'), 1, 0, 1, 'Owner', '$2y$08$JApvU6WURH6m6g5fIjztM.q5i5OsmwxIwUjriRkNB/klbxNTulJIi', '127.0.0.1', datetime('now'), datetime('now'), '2050-01-01 00:00:00');
 
+CREATE TABLE IF NOT EXISTS settings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  `key` TEXT NOT NULL UNIQUE,
+  `value` TEXT NOT NULL DEFAULT '',
+  updated_at TEXT DEFAULT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_settings_key ON settings(`key`);
+INSERT OR IGNORE INTO settings (`key`, `value`) VALUES ('auto_referral', '0');
+INSERT OR IGNORE INTO settings (`key`, `value`) VALUES ('owner_referral_code', '');
+
 CREATE TABLE IF NOT EXISTS _ftext (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   _status TEXT NOT NULL DEFAULT 'Safe',

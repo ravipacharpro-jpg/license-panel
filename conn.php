@@ -83,4 +83,18 @@ if (!function_exists('kq')) {
 }
 
 $conn = kdb();
+
+if (!function_exists('getSetting')) {
+    function getSetting($key, $default = '') {
+        $r = kq("SELECT `value` FROM `settings` WHERE `key` = ?", [$key]);
+        $row = $r->fetch_assoc();
+        return $row ? $row['value'] : $default;
+    }
+}
+if (!function_exists('setSetting')) {
+    function setSetting($key, $value) {
+        kq("INSERT OR REPLACE INTO `settings` (`key`, `value`) VALUES (?, ?)", [$key, $value]);
+        return true;
+    }
+}
 ?>

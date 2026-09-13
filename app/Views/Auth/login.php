@@ -170,7 +170,7 @@
         <p class="text-center after-card">
             <small class="px-auto p-2 rounded">
                 TO BUY PANEL DM HERE :-
-                <a href="https://telegram.me/aryanispe">@aryanispe</a>
+                <a href="https://t.me/L359D" target="_blank"><i class="bi bi-telegram"></i> @L359D</a>
             </small>
         </p>
     </div>

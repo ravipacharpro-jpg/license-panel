@@ -101,6 +101,12 @@ CREATE TABLE `users` (
   `expiration_date` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+CREATE TABLE `settings` (
+  `id` int(11) NOT NULL,
+  `key` varchar(66) NOT NULL,
+  `value` varchar(255) NOT NULL DEFAULT ''
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+INSERT INTO `settings` (`id`, `key`, `value`) VALUES (1, 'auto_referral', '0'), (2, 'owner_referral_code', '');
 CREATE TABLE `_ftext` (
   `id` int(11) NOT NULL,
   `_status` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
@@ -117,7 +123,10 @@ ALTER TABLE `modname` ADD PRIMARY KEY (`id`);
 ALTER TABLE `onoff` ADD PRIMARY KEY (`id`);
 ALTER TABLE `referral_code` ADD PRIMARY KEY (`id_reff`);
 ALTER TABLE `users` ADD PRIMARY KEY (`id_users`), ADD UNIQUE KEY `username` (`username`,`email`);
+ALTER TABLE `settings` ADD PRIMARY KEY (`id`);
 ALTER TABLE `_ftext` ADD PRIMARY KEY (`id`);
+
+ALTER TABLE `settings` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 ALTER TABLE `credit` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 ALTER TABLE `Feature` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;

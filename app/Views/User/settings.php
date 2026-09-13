@@ -163,6 +163,32 @@
     </div>
 </div>
 
+<?php if ($user->level == 1): ?>
+<div class="row">
+    <div class="col-lg-6 animate-in" style="animation-delay: 0.3s">
+        <div class="card mb-3">
+            <div class="card-header">
+                <i class="bi bi-gear me-2"></i> Auto Referral
+            </div>
+            <div class="card-body">
+                <p class="text-white" style="font-size:13px;">When ON, new users get your referral code auto-filled on registration.</p>
+                <form method="post" action="">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="auto_referral_form" value="1">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="auto_referral" id="autoReferral" value="1" <?= getSetting('auto_referral') == '1' ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="autoReferral">Enable Auto Referral</label>
+                    </div>
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="bi bi-save me-2"></i> Save Setting
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const animatedElements = document.querySelectorAll('.animate-in');

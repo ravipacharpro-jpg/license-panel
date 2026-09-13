@@ -296,6 +296,13 @@ class User extends BaseController
         if ($this->request->getPost('fullname_form'))
             return $this->fullname_act();
 
+        if ($this->request->getPost('auto_referral_form') && $this->user->level == 1) {
+            include('conn.php');
+            $val = $this->request->getPost('auto_referral') ? '1' : '0';
+            setSetting('auto_referral', $val);
+            return redirect()->back()->with('msgSuccess', 'Auto Referral setting updated.');
+        }
+
         $user = $this->user;
         
         $validation = Services::validation();
