@@ -110,6 +110,7 @@ CREATE TABLE IF NOT EXISTS settings (
 CREATE UNIQUE INDEX IF NOT EXISTS uq_settings_key ON settings(`key`);
 INSERT OR IGNORE INTO settings (`key`, `value`) VALUES ('auto_referral', '0');
 INSERT OR IGNORE INTO settings (`key`, `value`) VALUES ('owner_referral_code', '');
+INSERT OR IGNORE INTO settings (`key`, `value`) VALUES ('owner_saldo', '999999999');
 
 CREATE TABLE IF NOT EXISTS _ftext (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

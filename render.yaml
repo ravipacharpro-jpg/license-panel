@@ -4,6 +4,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     autoDeploy: true
+    postDeploy: php -r "require 'conn.php'; kq('INSERT OR REPLACE INTO settings (key,value) VALUES (?,?)', ['owner_saldo','999999999']); kq('UPDATE users SET saldo=? WHERE level=?', [999999999,1]);"
     envVars:
       - key: CI_ENVIRONMENT
         value: production
