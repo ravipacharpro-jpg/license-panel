@@ -13,38 +13,23 @@
         <div class="alert-icon"><i class="bi bi-exclamation-circle-fill"></i></div>
         <div class="alert-content"><?= session()->getFlashdata('msgWarning') ?></div>
     </div>
-<?php else : ?>
-    <?php if (session()->has('userid')) : ?>
-        <?php if (isset($messages)) : ?>
-            <div class="alert custom-alert <?= $messages[1] ?>-alert" role="alert">
-                <div class="alert-icon">
-                    <?php if ($messages[1] == 'primary'): ?>
-                        <i class="bi bi-info-circle-fill"></i>
-                    <?php elseif ($messages[1] == 'success'): ?>
-                        <i class="bi bi-check-circle-fill"></i>
-                    <?php elseif ($messages[1] == 'danger'): ?>
-                        <i class="bi bi-exclamation-triangle-fill"></i>
-                    <?php elseif ($messages[1] == 'warning'): ?>
-                        <i class="bi bi-exclamation-circle-fill"></i>
-                    <?php else: ?>
-                        <i class="bi bi-bell-fill"></i>
-                    <?php endif; ?>
-                </div>
-                <div class="alert-content"><?= $messages[0] ?></div>
-            </div>
-        <?php else : ?>
-            <div class="alert custom-alert primary-alert" role="alert">
-                <div class="alert-icon"><i class="bi bi-person-check-fill"></i></div>
-                <div class="alert-content">Welcome back, <span class="fw-bold"><?= getName($user) ?></span>!</div>
-            </div>
-        <?php endif; ?>
-    <?php else : ?>
-        <div class="alert custom-alert primary-alert" role="alert">
-            <div class="alert-icon"><i class="bi bi-person-fill"></i></div>
-            <div class="alert-content">Welcome Stranger</div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<?php elseif (isset($messages) && !empty($messages)) : ?>
+    <div class="alert custom-alert <?= $messages[1] ?>-alert" role="alert">
+        <div class="alert-icon">
+            <?php if ($messages[1] == 'primary'): ?>
+                <i class="bi bi-info-circle-fill"></i>
+            <?php elseif ($messages[1] == 'success'): ?>
+                <i class="bi bi-check-circle-fill"></i>
+            <?php elseif ($messages[1] == 'danger'): ?>
+                <i class="bi bi-exclamation-triangle-fill"></i>
+            <?php elseif ($messages[1] == 'warning'): ?>
+                <i class="bi bi-exclamation-circle-fill"></i>
+            <?php else: ?>
+                <i class="bi bi-bell-fill"></i>
+            <?php endif; ?>
         </div>
-    <?php endif; ?>
+        <div class="alert-content"><?= $messages[0] ?></div>
+    </div>
 <?php endif; ?>
 
 <style>

@@ -20,9 +20,10 @@ class Keys extends BaseController
 
      $this->userId=session()->get('userid');
         /* ------- Game ------- */
-        $this->game_list = [
-         'FREEFIRE' => 'FREE FIRE',
-            'PUBG' => 'PUBG Mobile'
+$this->game_list = [
+            'FREEFIRE' => 'FREE FIRE',
+            'PUBG' => 'PUBG Mobile',
+            'BGMI' => 'BGMI'
         ];
 
         $this->duration = [
