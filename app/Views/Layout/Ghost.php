@@ -67,8 +67,8 @@ a{color:var(--ghost-accent);}
 </style>
 <script src="<?= base_url('assets/ghost-fx.js') ?>" defer></script>
 <script>
+document.addEventListener('DOMContentLoaded', function(){
 (function(){
-  // Inject dropdown directly into body to escape stacking context
   var dd = document.createElement('div');
   dd.id = 'themeDropdown';
   dd.className = 'ghost-theme-dropdown';
@@ -77,18 +77,17 @@ a{color:var(--ghost-accent);}
     '<div class="ghost-theme-opt" data-t="azure"><span class="ghost-theme-dot dot-azure"></span> Ghost Blue <span class="ghost-theme-check"><i class="bi bi-check-circle"></i></span></div>'+
     '<div class="ghost-theme-opt" data-t="light"><span class="ghost-theme-dot dot-light"></span> Ghost Light <span class="ghost-theme-check"><i class="bi bi-check-circle"></i></span></div>';
   document.body.appendChild(dd);
-
-  function setGhostTheme(name){
+  window._setGhostTheme = function(name){
     document.cookie='ghost_theme='+name+'; path=/; max-age=31536000';
     document.documentElement.setAttribute('data-theme',name);
     dd.classList.remove('open');
     window.location.reload();
-  }
-  function toggleThemeDropdown(){ dd.classList.toggle('open'); }
+  };
+  window._toggleThemeDropdown = function(){ dd.classList.toggle('open'); };
   dd.querySelectorAll('.ghost-theme-opt').forEach(function(o){
     o.addEventListener('click', function(e){
       e.stopPropagation();
-      setGhostTheme(o.dataset.t);
+      window._setGhostTheme(o.dataset.t);
     });
   });
   document.addEventListener('click',function(e){
@@ -97,4 +96,5 @@ a{color:var(--ghost-accent);}
     }
   });
 })();
+});
 </script>
