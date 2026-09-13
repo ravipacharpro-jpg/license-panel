@@ -60,8 +60,8 @@
             </button>
             <!-- Ghost theme switch (3 variants, persists via cookie) -->
             <div class="theme-switch ms-2">
-                <div class="theme-switch-btn" id="themeSwitchBtn" onclick="_toggleThemeDropdown()" title="Ghost theme">
-                    <i class="bi bi-stars"></i>
+                <div class="theme-switch-btn" id="themeSwitchBtn" onclick="_toggleThemeDropdown()" title="Change Theme">
+                    <i class="bi bi-palette"></i>
                 </div>
             </div>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
