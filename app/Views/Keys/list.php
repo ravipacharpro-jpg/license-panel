@@ -120,7 +120,7 @@
 <?= script_tag("https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap5.min.js") ?>
 <script>
     $(document).ready(function() {
-        var csrfName = '<?= csrf_token() ?>';
+        var csrfName = 'csrf_test_name';
         var csrfHash = '<?= csrf_hash() ?>';
         var table = $('#datatable').DataTable({
             processing: true,
