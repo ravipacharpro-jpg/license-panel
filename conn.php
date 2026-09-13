@@ -83,6 +83,9 @@ if (!function_exists('kq')) {
     }
 }
 
+if (!function_exists('db_connect')) {
+    function db_connect() { return kdb(); }
+}
 $conn = kdb();
 
 if (!function_exists('getSetting')) {
