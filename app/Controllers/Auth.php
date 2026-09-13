@@ -202,7 +202,6 @@ class Auth extends BaseController
                     $sql = "SELECT `acc_expiration` FROM `referral_code` WHERE `Referral` = '".$referral."'";
                     $query = kq($sql);
                     $period = $query->fetch_assoc();
-                    
                     $sql1 = "SELECT `level` FROM `referral_code` WHERE `Referral` = '".$referral."'";
                     $query1 = kq($sql1);
                     $userLevel = $query1->fetch_assoc();
@@ -210,12 +209,12 @@ class Auth extends BaseController
                         'email' => $email,
                         'username' => $userna,
                         'fullname' => $fullname,
-                        'level' => $userLevel,
+                        'level' => $userLevel['level'] ?? 3,
                         'password' => $hashPassword,
                         'saldo' => $rCheck->set_saldo ?: 0,
                         'uplink' => $rCheck->created_by,
                         'user_ip' => $ipaddress,
-                        'expiration_date' => $period
+                        'expiration_date' => $period ? $period['acc_expiration'] : ''
                     ];
                     $ids = $this->userModel->insert($data_register, true);
                     if ($ids) {
