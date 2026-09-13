@@ -59,21 +59,9 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <!-- Ghost theme switch (3 variants, persists via cookie) -->
-            <?php $gh = $_COOKIE['ghost_theme'] ?? 'nebula'; if (!in_array($gh, ['nebula','azure','light'])) $gh = 'nebula'; ?>
             <div class="theme-switch ms-2">
                 <div class="theme-switch-btn" id="themeSwitchBtn" onclick="toggleThemeDropdown()" title="Ghost theme">
                     <i class="bi bi-stars"></i>
-                </div>
-                <div class="theme-dropdown" id="themeDropdown">
-                    <div class="theme-option <?= $gh === 'nebula' ? 'active' : '' ?>" onclick="setGhostTheme('nebula')">
-                        <span class="theme-dot dot-nebula"></span> Ghost Dark <span class="theme-check"><i class="bi bi-check-circle"></i></span>
-                    </div>
-                    <div class="theme-option <?= $gh === 'azure' ? 'active' : '' ?>" onclick="setGhostTheme('azure')">
-                        <span class="theme-dot dot-azure"></span> Ghost Blue <span class="theme-check"><i class="bi bi-check-circle"></i></span>
-                    </div>
-                    <div class="theme-option <?= $gh === 'light' ? 'active' : '' ?>" onclick="setGhostTheme('light')">
-                        <span class="theme-dot dot-light"></span> Ghost Light <span class="theme-check"><i class="bi bi-check-circle"></i></span>
-                    </div>
                 </div>
             </div>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
